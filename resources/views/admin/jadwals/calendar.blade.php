@@ -87,7 +87,6 @@
         display: none !important;
     }
     .fc-daygrid-dot-event {
-        background-color: var(--fc-event-bg-color, #4f46e5);
         color: #ffffff !important;
     }
     .fc-daygrid-dot-event .fc-event-time,
@@ -714,6 +713,20 @@
                         }
 
                         return null;
+                    },
+                    eventDidMount: function(info) {
+                        const color = info.event.backgroundColor || (info.event.extendedProps && info.event.extendedProps.modul_warna);
+                        if (color) {
+                            info.el.style.setProperty('background-color', color, 'important');
+                            info.el.style.setProperty('border-color', color, 'important');
+                            info.el.style.setProperty('color', '#ffffff', 'important');
+                            info.el.style.setProperty('--fc-event-bg-color', color);
+                            info.el.style.setProperty('--fc-event-border-color', color);
+                        }
+                        const dot = info.el.querySelector('.fc-list-event-dot');
+                        if (dot && color) {
+                            dot.style.setProperty('border-color', color, 'important');
+                        }
                     },
                     events: function(fetchInfo, successCallback, failureCallback) {
                         const url = new URL('{{ route("admin.jadwals.events") }}', window.location.origin);

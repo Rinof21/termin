@@ -124,16 +124,12 @@
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
-            background-color: var(--fc-event-bg-color, #4f46e5) !important;
-            border-color: var(--fc-event-border-color, #4f46e5) !important;
             color: #ffffff !important;
         }
         .fc-daygrid-event-dot {
             display: none !important;
         }
         .fc-daygrid-dot-event {
-            background-color: var(--fc-event-bg-color, #4f46e5) !important;
-            border-color: var(--fc-event-border-color, #4f46e5) !important;
             color: #ffffff !important;
         }
         .fc-daygrid-dot-event .fc-event-time,
@@ -142,8 +138,6 @@
             font-weight: 600 !important;
         }
         .fc-daygrid-block-event {
-            background-color: var(--fc-event-bg-color, #4f46e5) !important;
-            border-color: var(--fc-event-border-color, #4f46e5) !important;
             color: #ffffff !important;
         }
         .fc-daygrid-event-harness-hidden {
@@ -1223,10 +1217,17 @@
                             return { domNodes: [fallback] };
                         },
                         eventDidMount: function(info) {
-                            if (info.event.backgroundColor) {
-                                info.el.style.backgroundColor = info.event.backgroundColor;
-                                info.el.style.borderColor = info.event.borderColor || info.event.backgroundColor;
-                                info.el.style.color = '#ffffff';
+                            const color = info.event.backgroundColor || (info.event.extendedProps && info.event.extendedProps.modul_warna);
+                            if (color) {
+                                info.el.style.setProperty('background-color', color, 'important');
+                                info.el.style.setProperty('border-color', color, 'important');
+                                info.el.style.setProperty('color', '#ffffff', 'important');
+                                info.el.style.setProperty('--fc-event-bg-color', color);
+                                info.el.style.setProperty('--fc-event-border-color', color);
+                            }
+                            const dot = info.el.querySelector('.fc-list-event-dot');
+                            if (dot && color) {
+                                dot.style.setProperty('border-color', color, 'important');
                             }
                         },
                         eventClick: (info) => {
