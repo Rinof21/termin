@@ -248,6 +248,35 @@
                     </a>
                 </div>
 
+                <!-- Center: Informasi Tahun Ajaran, Termin & Rentang Tanggal -->
+                <div class="hidden md:flex items-center gap-2.5 px-3.5 py-1.5 bg-slate-100/90 border border-slate-200/90 rounded-xl shadow-2xs">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full {{ ($currentTermin && $currentTermin->is_aktif) ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }}"></span>
+                        <span class="font-bold text-xs text-slate-900 tracking-tight">
+                            {{ $currentTermin ? $currentTermin->nama : 'Termin Perkuliahan' }}
+                        </span>
+                        @if($currentTermin && $currentTermin->is_aktif)
+                            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                AKTIF
+                            </span>
+                        @endif
+                    </div>
+
+                    <span class="text-slate-300">|</span>
+
+                    <span class="text-xs text-slate-600 font-semibold">
+                        T.A. {{ $currentTermin->tahun_ajaran ?? '2026/2027' }}
+                    </span>
+
+                    @if($currentTermin && $currentTermin->rentang_tanggal && $currentTermin->rentang_tanggal !== '-')
+                        <span class="text-slate-300 hidden lg:inline">|</span>
+                        <span class="hidden lg:inline-flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                            <i class="bi bi-calendar-range text-slate-400 text-xs"></i>
+                            <span>{{ $currentTermin->rentang_tanggal }}</span>
+                        </span>
+                    @endif
+                </div>
+
                 <!-- Right Action Buttons: Filter Semester, Cetak & Login -->
                 <div class="flex items-center gap-2">
                     <!-- Dropdown Semester Filter -->
@@ -292,47 +321,6 @@
 
     <!-- Main Content Area (Container Fluid) -->
     <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-5 space-y-5">
-
-        <!-- Banner Info Akademik & Termin Aktif -->
-        <div class="bg-gradient-to-r from-brand-600 via-indigo-600 to-brand-800 rounded-2xl p-4 sm:p-5 text-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 no-print">
-            <div class="space-y-1">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-xs font-bold bg-white/20 px-2.5 py-0.5 rounded-full text-white backdrop-blur-xs">
-                        Tahun Akademik 2026/2027
-                    </span>
-                    <span class="text-xs font-bold {{ $semesterFilter === 'Ganjil' ? 'bg-indigo-300 text-indigo-950' : 'bg-emerald-300 text-emerald-950' }} px-2.5 py-0.5 rounded-full">
-                        Semester {{ $semesterFilter }}
-                    </span>
-                    @if($currentTermin && $currentTermin->is_aktif)
-                        <span class="text-xs font-extrabold bg-emerald-400 text-emerald-950 px-2 py-0.5 rounded-full">
-                            AKTIF
-                        </span>
-                    @endif
-                </div>
-                <h2 class="text-lg sm:text-xl font-black tracking-tight text-white mt-1">
-                    {{ $currentTermin ? $currentTermin->nama : 'Jadwal Kuliah Termin S1 Kedokteran' }}
-                </h2>
-                <p class="text-xs text-brand-100 max-w-2xl">
-                    {{ $currentTermin ? $currentTermin->rentang_tanggal : 'Pilih minggu dan sesi untuk melihat plotting jadwal perkuliahan harian.' }}
-                </p>
-            </div>
-
-            <!-- Kartu Statistik Ringkas -->
-            <div class="grid grid-cols-3 gap-2 sm:gap-3 shrink-0">
-                <div class="bg-white/10 backdrop-blur-xs rounded-xl p-2 sm:p-2.5 text-center border border-white/10">
-                    <span class="block text-base sm:text-lg font-black text-white">{{ $totalModulsCount }}</span>
-                    <span class="text-[10px] text-brand-200 font-semibold uppercase tracking-wider">Modul</span>
-                </div>
-                <div class="bg-white/10 backdrop-blur-xs rounded-xl p-2 sm:p-2.5 text-center border border-white/10">
-                    <span class="block text-base sm:text-lg font-black text-white">{{ $totalDosensCount }}</span>
-                    <span class="text-[10px] text-brand-200 font-semibold uppercase tracking-wider">Dosen</span>
-                </div>
-                <div class="bg-white/10 backdrop-blur-xs rounded-xl p-2 sm:p-2.5 text-center border border-white/10">
-                    <span class="block text-base sm:text-lg font-black text-white">{{ $totalJadwalsCount }}</span>
-                    <span class="text-[10px] text-brand-200 font-semibold uppercase tracking-wider">Sesi Terplot</span>
-                </div>
-            </div>
-        </div>
 
         <!-- ============================================================== -->
         <!-- LAYOUT 2 KOLOM: KOLOM KIRI (JADWAL) + KOLOM KANAN (INFO/DETAIL) -->

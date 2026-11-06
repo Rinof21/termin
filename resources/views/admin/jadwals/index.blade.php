@@ -19,29 +19,25 @@
             </div>
             <p class="text-sm text-slate-500 mt-0.5">Kelola seluruh data jadwal kuliah untuk modul <strong>Semester {{ $activeSemester ?? 'Ganjil' }}</strong></p>
         </div>
-        <div class="flex items-center gap-2.5">
-            <!-- Tombol Toggle Mode Pilih / Select -->
-            <button type="button" @click="toggleSelectMode()" 
-                    :class="isSelectMode ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2.5 border rounded-xl text-xs font-semibold shadow-xs transition">
-                <i :class="isSelectMode ? 'bi bi-check-all text-base' : 'bi bi-check2-square text-brand-600 text-sm'"></i>
-                <span x-text="isSelectMode ? 'Selesai Memilih' : 'Pilih / Select'"></span>
-            </button>
-
+        <div class="flex items-center gap-2">
+            <!-- 3 Mode Tampilan: Kalender, Matriks, Tabel (Aktif) -->
             <a href="{{ route('admin.jadwals.index') }}" 
-               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition">
-                <i class="bi bi-calendar3 text-sm"></i>
+               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition"
+               title="Beralih ke Tampilan Kalender">
+                <i class="bi bi-calendar3 text-sm text-brand-600"></i>
                 <span>Tampilan Kalender</span>
             </a>
             <a href="{{ route('admin.jadwals.matrix') }}" 
-               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-semibold shadow-xs transition">
+               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition"
+               title="Beralih ke Tampilan Matriks">
                 <i class="bi bi-grid-3x3 text-sm text-emerald-600"></i>
                 <span>Tampilan Matriks</span>
             </a>
-            <a href="{{ route('admin.jadwals.create') }}" 
-               class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl text-xs font-semibold shadow-sm transition">
-                <i class="bi bi-calendar-plus text-sm"></i>
-                <span>Tambah Jadwal Kuliah</span>
+            <a href="{{ route('admin.jadwals.table') }}" 
+               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-brand-600 text-white border border-brand-700 rounded-xl text-xs font-bold shadow-xs transition"
+               title="Mode Tampilan Tabel (Aktif)">
+                <i class="bi bi-table text-sm"></i>
+                <span>Tampilan Tabel</span>
             </a>
         </div>
     </div>
@@ -49,14 +45,16 @@
     <!-- Filter & Pencarian -->
     <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs">
         <form method="GET" action="{{ route('admin.jadwals.table') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-            <!-- Filter Semester -->
+            <input type="hidden" name="semester" value="{{ $semesterFilter ?? $activeSemester }}">
+
+            <!-- Tombol Toggle Mode Pilih / Select -->
             <div>
-                <select name="semester" onchange="this.form.submit()" 
-                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                    <option value="Ganjil" {{ ($semesterFilter ?? $activeSemester) === 'Ganjil' ? 'selected' : '' }}>Sem. Ganjil {{ $activeSemester === 'Ganjil' ? '(Aktif)' : '' }}</option>
-                    <option value="Genap" {{ ($semesterFilter ?? $activeSemester) === 'Genap' ? 'selected' : '' }}>Sem. Genap {{ $activeSemester === 'Genap' ? '(Aktif)' : '' }}</option>
-                    <option value="Semua" {{ ($semesterFilter ?? '') === 'Semua' ? 'selected' : '' }}>Semua Semester</option>
-                </select>
+                <button type="button" @click="toggleSelectMode()" 
+                        :class="isSelectMode ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'"
+                        class="w-full h-full inline-flex items-center justify-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-semibold shadow-xs transition">
+                    <i :class="isSelectMode ? 'bi bi-check-all text-base' : 'bi bi-check2-square text-brand-600 text-sm'"></i>
+                    <span x-text="isSelectMode ? 'Selesai Memilih' : 'Pilih / Select'"></span>
+                </button>
             </div>
 
             <!-- Pencarian Kata Kunci -->

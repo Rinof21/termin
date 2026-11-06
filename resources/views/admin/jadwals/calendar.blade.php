@@ -136,21 +136,25 @@
             </div>
             <p class="text-sm text-slate-500 mt-0.5">Menampilkan jadwal kuliah untuk modul <strong>Semester {{ $activeSemester ?? 'Ganjil' }}</strong>. Klik kegiatan di kalender untuk rincian lengkap.</p>
         </div>
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-2">
+            <!-- 3 Mode Tampilan: Kalender (Aktif), Matriks, Tabel -->
+            <a href="{{ route('admin.jadwals.index') }}" 
+               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-brand-600 text-white border border-brand-700 rounded-xl text-xs font-bold shadow-xs transition"
+               title="Mode Tampilan Kalender (Aktif)">
+                <i class="bi bi-calendar3 text-sm"></i>
+                <span>Tampilan Kalender</span>
+            </a>
             <a href="{{ route('admin.jadwals.matrix') }}" 
-               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-semibold shadow-xs transition">
+               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition"
+               title="Beralih ke Tampilan Matriks">
                 <i class="bi bi-grid-3x3 text-sm text-emerald-600"></i>
                 <span>Tampilan Matriks</span>
             </a>
             <a href="{{ route('admin.jadwals.table') }}" 
-               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition">
-                <i class="bi bi-table text-sm"></i>
+               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition"
+               title="Beralih ke Tampilan Tabel">
+                <i class="bi bi-table text-sm text-slate-500"></i>
                 <span>Tampilan Tabel</span>
-            </a>
-            <a href="{{ route('admin.jadwals.create') }}" 
-               class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl text-xs font-semibold shadow-sm transition">
-                <i class="bi bi-calendar-plus text-sm"></i>
-                <span>Tambah Jadwal Kuliah</span>
             </a>
         </div>
     </div>

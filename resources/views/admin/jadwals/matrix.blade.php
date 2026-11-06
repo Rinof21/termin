@@ -69,36 +69,24 @@
             </p>
         </div>
         <div class="flex items-center gap-2.5 flex-wrap">
-            <form method="GET" action="{{ route('admin.jadwals.matrix') }}" class="inline-flex">
-                <input type="hidden" name="minggu" value="{{ $mingguNomor }}">
-                <input type="hidden" name="hari" value="{{ $selectedDay['slug'] }}">
-                <select name="semester" onchange="this.form.submit()" 
-                        class="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:border-brand-500 shadow-xs cursor-pointer">
-                    <option value="Ganjil" {{ $semesterFilter === 'Ganjil' ? 'selected' : '' }}>Semester Ganjil</option>
-                    <option value="Genap" {{ $semesterFilter === 'Genap' ? 'selected' : '' }}>Semester Genap</option>
-                </select>
-            </form>
-
+            <!-- 3 Mode Tampilan: Kalender, Matriks (Aktif), Tabel -->
             <a href="{{ route('admin.jadwals.index') }}" 
-               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition">
-                <i class="bi bi-calendar3 text-sm"></i>
+               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition"
+               title="Beralih ke Tampilan Kalender">
+                <i class="bi bi-calendar3 text-sm text-brand-600"></i>
                 <span>Tampilan Kalender</span>
             </a>
-            <a href="{{ route('admin.jadwals.table') }}" 
-               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition">
-                <i class="bi bi-table text-sm"></i>
-                <span>Tampilan Tabel</span>
+            <a href="{{ route('admin.jadwals.matrix') }}" 
+               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-brand-600 text-white border border-brand-700 rounded-xl text-xs font-bold shadow-xs transition"
+               title="Mode Tampilan Matriks (Aktif)">
+                <i class="bi bi-grid-3x3 text-sm"></i>
+                <span>Tampilan Matriks</span>
             </a>
-            <button type="button" onclick="window.print()" 
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition"
-                    title="Cetak Jadwal Matriks">
-                <i class="bi bi-printer text-sm"></i>
-                <span>Cetak / PDF</span>
-            </button>
-            <a href="{{ route('admin.jadwals.create', ['tanggal' => $selectedDate, 'semester' => $semesterFilter]) }}" 
-               class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl text-xs font-semibold shadow-sm transition">
-                <i class="bi bi-calendar-plus text-sm"></i>
-                <span>Tambah Jadwal</span>
+            <a href="{{ route('admin.jadwals.table') }}" 
+               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition"
+               title="Beralih ke Tampilan Tabel">
+                <i class="bi bi-table text-sm text-slate-500"></i>
+                <span>Tampilan Tabel</span>
             </a>
         </div>
     </div>
@@ -436,7 +424,14 @@
         <!-- ============================================================== -->
         <!-- KOLOM KANAN: PANEL INFORMASI & DETAIL KEGIATAN                 -->
         <!-- ============================================================== -->
-        <div id="panel-informasi-detail" class="lg:col-span-4 xl:col-span-4 2xl:col-span-3 lg:sticky lg:top-20 space-y-5 no-print">
+        <div id="panel-informasi-detail" class="lg:col-span-4 xl:col-span-4 2xl:col-span-3 lg:sticky lg:top-20 space-y-4 no-print">
+            
+            <!-- Tombol Tambah Jadwal Kuliah -->
+            <a href="{{ route('admin.jadwals.create', ['tanggal' => $selectedDate, 'semester' => $semesterFilter]) }}" 
+               class="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl text-xs font-bold shadow-xs transition">
+                <i class="bi bi-calendar-plus text-sm"></i>
+                <span>Tambah Jadwal Kuliah</span>
+            </a>
             
             <!-- KEADAAN 1: SAAT ADA JADWAL YANG DIKLIK -->
             <div x-cloak x-show="hasSelectedEvent" 

@@ -113,8 +113,8 @@
                     <p class="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Menu Utama</p>
                     <nav class="space-y-1">
                         <a href="{{ route('dashboard') }}" 
-                           class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('dashboard') || request()->routeIs('admin.jadwals.index') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                            <i class="bi bi-calendar3 text-lg {{ request()->routeIs('dashboard') || request()->routeIs('admin.jadwals.index') ? 'text-brand-600' : 'text-slate-400' }}"></i>
+                           class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('dashboard') || request()->routeIs('admin.jadwals.*') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                            <i class="bi bi-calendar3 text-lg {{ request()->routeIs('dashboard') || request()->routeIs('admin.jadwals.*') ? 'text-brand-600' : 'text-slate-400' }}"></i>
                             <span class="flex-1">Kalender Termin</span>
                         </a>
                     </nav>
@@ -124,21 +124,6 @@
                 <div>
                     <p class="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Jadwal & Akademik</p>
                     <nav class="space-y-1">
-                        <!-- Matriks Jadwal (Tampilan Spreadsheet Modul) -->
-                        <a href="{{ route('admin.jadwals.matrix') }}" 
-                           class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.jadwals.matrix') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                            <i class="bi bi-grid-3x3 text-lg {{ request()->routeIs('admin.jadwals.matrix') ? 'text-brand-600' : 'text-slate-400' }}"></i>
-                            <span class="flex-1">Matriks Jadwal</span>
-                            <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded-full">Baru</span>
-                        </a>
-
-                        <!-- Tabel Jadwal Kuliah -->
-                        <a href="{{ route('admin.jadwals.table') }}" 
-                           class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.jadwals.table') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                            <i class="bi bi-calendar-week text-lg {{ request()->routeIs('admin.jadwals.table') ? 'text-brand-600' : 'text-slate-400' }}"></i>
-                            <span class="flex-1">Daftar Jadwal Kuliah</span>
-                        </a>
-
                         <!-- Jadwal Termin Akademik -->
                         <a href="{{ route('admin.termins.index') }}" 
                            class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.termins.*') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
