@@ -536,7 +536,7 @@ class JadwalController extends Controller
     /**
      * Tampilkan form buat jadwal baru.
      */
-    public function create()
+    public function create(Request $request)
     {
         $activeSemester = Setting::getActiveSemester();
         $moduls = Modul::where('tipe_semester', $activeSemester)
@@ -547,6 +547,60 @@ class JadwalController extends Controller
             ->get();
         $dosens = Dosen::orderBy('nama')->get();
         $slotJam = self::getSlotJam();
+
+        // 9 Sesi Standar Kurikulum S1 Kedokteran
+        $standardSlots = [
+            1 => ['mulai' => '07:30', 'selesai' => '08:20'],
+            2 => ['mulai' => '08:20', 'selesai' => '09:10'],
+            3 => ['mulai' => '09:10', 'selesai' => '10:00'],
+            4 => ['mulai' => '10:10', 'selesai' => '11:00'],
+            5 => ['mulai' => '11:00', 'selesai' => '11:50'],
+            6 => ['mulai' => '13:00', 'selesai' => '13:50'],
+            7 => ['mulai' => '13:50', 'selesai' => '14:40'],
+            8 => ['mulai' => '14:40', 'selesai' => '15:30'],
+            9 => ['mulai' => '15:30', 'selesai' => '16:20'],
+        ];
+
+        $sesi = (int) $request->query('sesi', 0);
+        $jamMulai = $request->query('jam_mulai', '');
+        $jamSelesai = $request->query('jam_selesai', '');
+
+        if ($sesi && isset($standardSlots[$sesi])) {
+            if (!$jamMulai) {
+                $jamMulai = $standardSlots[$sesi]['mulai'];
+            }
+            if (!$jamSelesai) {
+                $jamSelesai = $standardSlots[$sesi]['selesai'];
+            }
+        } elseif ($jamMulai && !$sesi) {
+            $jmClean = substr($jamMulai, 0, 5);
+            foreach ($standardSlots as $sNum => $sData) {
+                if ($sData['mulai'] === $jmClean) {
+                    $sesi = $sNum;
+                    if (!$jamSelesai) {
+                        $jamSelesai = $sData['selesai'];
+                    }
+                    break;
+                }
+            }
+        }
+
+        if ($jamMulai) {
+            $jamMulai = substr($jamMulai, 0, 5);
+        }
+        if ($jamSelesai) {
+            $jamSelesai = substr($jamSelesai, 0, 5);
+        }
+
+        $preset = [
+            'modul_id' => $request->query('modul_id', ''),
+            'tanggal' => $request->query('tanggal', \Carbon\Carbon::today()->format('Y-m-d')),
+            'jam_mulai' => $jamMulai,
+            'jam_selesai' => $jamSelesai,
+            'kelompok' => $request->query('kelompok', ''),
+            'sesi' => $sesi,
+            'from_matrix' => $request->has('tanggal') || $request->has('sesi') || $request->has('jam_mulai'),
+        ];
 
         $tipeKegiatan = [
             'Kuliah',
@@ -573,7 +627,7 @@ class JadwalController extends Controller
             ];
         });
 
-        return view('admin.jadwals.create', compact('moduls', 'dosens', 'tipeKegiatan', 'slotJam', 'activeSemester', 'modulMataKuliahMap'));
+        return view('admin.jadwals.create', compact('moduls', 'dosens', 'tipeKegiatan', 'slotJam', 'activeSemester', 'modulMataKuliahMap', 'preset'));
     }
 
     /**

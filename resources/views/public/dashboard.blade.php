@@ -538,9 +538,33 @@
                                                         </div>
                                                     </td>
                                                 @else
-                                                    <td class="p-2 align-middle text-center text-slate-300 text-xs">
-                                                        -
-                                                    </td>
+                                                    @auth
+                                                        @php
+                                                            $m = $cell['modul'] ?? null;
+                                                            $grp = $cell['kelompok'] ?? '';
+                                                            $createSlotUrl = route('admin.jadwals.create', [
+                                                                'modul_id' => $m ? $m->id : '',
+                                                                'tanggal' => $selectedDate,
+                                                                'jam_mulai' => $slot['mulai'],
+                                                                'jam_selesai' => $slot['selesai'],
+                                                                'kelompok' => $grp,
+                                                                'sesi' => $slot['sesi'],
+                                                            ]);
+                                                        @endphp
+                                                        <td class="p-2 align-middle text-center slot-cell group relative hover:bg-brand-50/40 transition cursor-pointer"
+                                                            onclick="window.location.href='{{ $createSlotUrl }}'">
+                                                            <a href="{{ $createSlotUrl }}" 
+                                                               class="opacity-0 group-hover:opacity-100 transform scale-90 group-hover:scale-100 transition inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-brand-600 text-slate-600 hover:text-white rounded-lg text-[10px] font-bold border border-slate-200 shadow-xs no-print"
+                                                               title="Plot Jadwal di Sesi Ini (Modul {{ $m ? $m->kode : '' }} • Sesi {{ $slot['sesi'] }})">
+                                                                <i class="bi bi-plus-lg text-[9px]"></i>
+                                                                <span>Plot</span>
+                                                            </a>
+                                                        </td>
+                                                    @else
+                                                        <td class="p-2 align-middle text-center text-slate-300 text-xs">
+                                                            -
+                                                        </td>
+                                                    @endauth
                                                 @endif
                                             @endfor
                                         </tr>

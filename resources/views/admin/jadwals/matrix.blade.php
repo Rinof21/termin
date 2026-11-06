@@ -95,7 +95,7 @@
                 <i class="bi bi-printer text-sm"></i>
                 <span>Cetak / PDF</span>
             </button>
-            <a href="{{ route('admin.jadwals.create') }}" 
+            <a href="{{ route('admin.jadwals.create', ['tanggal' => $selectedDate, 'semester' => $semesterFilter]) }}" 
                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl text-xs font-semibold shadow-sm transition">
                 <i class="bi bi-calendar-plus text-sm"></i>
                 <span>Tambah Jadwal</span>
@@ -366,18 +366,21 @@
                                             @php
                                                 $m = $cell['modul'] ?? null;
                                                 $grp = $cell['kelompok'] ?? '';
+                                                $createSlotUrl = route('admin.jadwals.create', [
+                                                    'modul_id' => $m ? $m->id : '',
+                                                    'tanggal' => $selectedDate,
+                                                    'jam_mulai' => $slot['mulai'],
+                                                    'jam_selesai' => $slot['selesai'],
+                                                    'kelompok' => $grp,
+                                                    'sesi' => $slot['sesi'],
+                                                ]);
                                             @endphp
-                                            <td class="p-2 align-middle text-center slot-cell group relative hover:bg-brand-50/30 transition">
-                                                <a href="{{ route('admin.jadwals.create', [
-                                                        'modul_id' => $m ? $m->id : '',
-                                                        'tanggal' => $selectedDate,
-                                                        'jam_mulai' => $slot['mulai'],
-                                                        'jam_selesai' => $slot['selesai'],
-                                                        'kelompok' => $grp,
-                                                   ]) }}" 
-                                                   class="add-slot-btn opacity-0 group-hover:opacity-100 transform scale-90 group-hover:scale-100 transition inline-flex items-center gap-1 px-2 py-1 bg-white hover:bg-brand-600 text-slate-500 hover:text-white rounded-lg text-[10px] font-bold border border-slate-200 shadow-2xs no-print"
-                                                   title="Tambah Jadwal di Sesi Ini">
-                                                    <i class="bi bi-plus-lg text-[9px]"></i>
+                                            <td class="p-2 align-middle text-center slot-cell group relative hover:bg-brand-50/40 transition cursor-pointer"
+                                                onclick="window.location.href='{{ $createSlotUrl }}'">
+                                                <a href="{{ $createSlotUrl }}" 
+                                                   class="add-slot-btn opacity-0 group-hover:opacity-100 transform scale-90 group-hover:scale-100 transition inline-flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-brand-600 text-slate-600 hover:text-white rounded-lg text-[11px] font-bold border border-slate-200 shadow-xs no-print"
+                                                   title="Plot Jadwal di Sesi {{ $slot['sesi'] }} ({{ $slot['label'] }})">
+                                                    <i class="bi bi-plus-lg text-[10px]"></i>
                                                     <span>Plot</span>
                                                 </a>
                                             </td>

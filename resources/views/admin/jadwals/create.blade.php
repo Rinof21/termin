@@ -24,9 +24,34 @@
     </div>
 
     <!-- Kartu Formulir -->
-    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 md:p-8">
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 md:p-8 space-y-6">
+
+        @if(!empty($preset['from_matrix']))
+            @php
+                $tglIndo = !empty($preset['tanggal']) ? \Carbon\Carbon::parse($preset['tanggal'])->translatedFormat('l, d F Y') : '';
+                $sesiText = !empty($preset['sesi']) ? 'Sesi ' . $preset['sesi'] : '';
+                $jamText = !empty($preset['jam_mulai']) && !empty($preset['jam_selesai']) ? "({$preset['jam_mulai']} - {$preset['jam_selesai']} WIB)" : '';
+            @endphp
+            <div class="p-4 rounded-2xl bg-indigo-50/90 border border-indigo-200/90 text-indigo-900 flex items-start gap-3 shadow-2xs">
+                <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 text-base shadow-xs">
+                    <i class="bi bi-calendar-check-fill"></i>
+                </div>
+                <div class="flex-1 text-xs">
+                    <div class="font-bold text-sm text-indigo-950 flex items-center gap-2">
+                        <span>Plotting Terpilih dari Sesi Matriks</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-200/80 text-indigo-800">OTOMATIS</span>
+                    </div>
+                    <p class="text-indigo-700 mt-1 leading-relaxed">
+                        Formulir telah otomatis disesuaikan untuk <strong>{{ $tglIndo }}</strong>
+                        @if($sesiText)&bull; <strong>{{ $sesiText }}</strong> {{ $jamText }}@endif
+                        @if(!empty($preset['kelompok']))&bull; Kelompok: <strong>{{ $preset['kelompok'] }}</strong>@endif.
+                    </p>
+                </div>
+            </div>
+        @endif
+
         <form action="{{ route('admin.jadwals.store') }}" method="POST" class="space-y-6"
-              x-data="jadwalFormApp(@js($modulMataKuliahMap ?? []), '{{ old('modul_id', '') }}', '{{ old('nama_kuliah', '') }}')">
+              x-data="jadwalFormApp(@js($modulMataKuliahMap ?? []), '{{ old('modul_id', $preset['modul_id'] ?? '') }}', '{{ old('nama_kuliah', '') }}')">
             @csrf
 
             <!-- Modul & Tipe Kegiatan -->
@@ -41,7 +66,7 @@
                             class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 transition @error('modul_id') border-rose-300 @enderror">
                         <option value="">-- Pilih Modul --</option>
                         @foreach($moduls as $modul)
-                            <option value="{{ $modul->id }}" {{ old('modul_id') == $modul->id ? 'selected' : '' }}>
+                            <option value="{{ $modul->id }}" {{ old('modul_id', $preset['modul_id'] ?? '') == $modul->id ? 'selected' : '' }}>
                                 {{ $modul->kode }} - {{ $modul->nama }} ({{ $modul->termin }})
                             </option>
                         @endforeach
@@ -295,7 +320,7 @@
 
             <!-- Tanggal & Jam Perkuliahan Tetap S1 Kedokteran -->
             <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-4"
-                 x-data="multiSesiApp('{{ old('jam_mulai', '') }}', '{{ old('jam_selesai', '') }}')">
+                 x-data="multiSesiApp('{{ old('jam_mulai', $preset['jam_mulai'] ?? '') }}', '{{ old('jam_selesai', $preset['jam_selesai'] ?? '') }}')">
                 <div class="flex items-center justify-between">
                     <div>
                         <span class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Waktu & Sesi Jam Kuliah Tetap</span>
@@ -362,7 +387,7 @@
                         <label for="tanggal" class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
                             Tanggal Perkuliahan <span class="text-rose-500">*</span>
                         </label>
-                        <input type="date" name="tanggal" id="tanggal" required value="{{ old('tanggal', '2026-11-02') }}"
+                        <input type="date" name="tanggal" id="tanggal" required value="{{ old('tanggal', $preset['tanggal'] ?? date('Y-m-d')) }}"
                                class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition @error('tanggal') border-rose-300 @enderror">
                         @error('tanggal')
                             <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
@@ -380,7 +405,7 @@
                                 $jamMulaiList = ['07:30', '08:20', '09:10', '10:10', '11:00', '13:00', '13:50', '14:40', '15:30'];
                             @endphp
                             @foreach($jamMulaiList as $jm)
-                                <option value="{{ $jm }}" {{ old('jam_mulai', '') == $jm ? 'selected' : '' }}>
+                                <option value="{{ $jm }}" {{ old('jam_mulai', $preset['jam_mulai'] ?? '') == $jm ? 'selected' : '' }}>
                                     {{ $jm }} WIB
                                 </option>
                             @endforeach
@@ -401,7 +426,7 @@
                                 $jamSelesaiList = ['08:20', '09:10', '10:00', '11:00', '11:50', '13:50', '14:40', '15:30', '16:20'];
                             @endphp
                             @foreach($jamSelesaiList as $js)
-                                <option value="{{ $js }}" {{ old('jam_selesai', '') == $js ? 'selected' : '' }}>
+                                <option value="{{ $js }}" {{ old('jam_selesai', $preset['jam_selesai'] ?? '') == $js ? 'selected' : '' }}>
                                     {{ $js }} WIB
                                 </option>
                             @endforeach
@@ -419,7 +444,10 @@
                     <label for="kelompok" class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
                         Kelompok Mahasiswa
                     </label>
-                    <input type="text" name="kelompok" id="kelompok" value="{{ old('kelompok') }}"
+                    <input type="text" name="kelompok" id="kelompok" value="{{ old('kelompok', $preset['kelompok'] ?? '') }}"
+                           placeholder="Contoh: A.1, A.2, Kelompok 8, Semua Kelompok"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 transition">
+                </div>
                            placeholder="Contoh: A.1, A.2, Kelompok 8, Semua Kelompok"
                            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 transition">
                 </div>
@@ -667,23 +695,30 @@
             { sesi: 9, mulai: '15:30', selesai: '16:20', label: '15.30-16.20' },
         ];
 
+        const clean = (t) => (t || '').substring(0, 5);
+
         return {
             sessions: SESSIONS,
-            jamMulai: initialMulai,
-            jamSelesai: initialSelesai,
+            jamMulai: clean(initialMulai),
+            jamSelesai: clean(initialSelesai),
             selected: [],
 
             init() {
                 this.syncFromInputs();
+                if (this.selected.length > 0) {
+                    this.applyToInputs();
+                }
             },
 
             syncFromInputs() {
-                if (!this.jamMulai || !this.jamSelesai) {
+                const mulai = clean(this.jamMulai);
+                const selesai = clean(this.jamSelesai);
+                if (!mulai || !selesai) {
                     this.selected = [];
                     return;
                 }
-                const startSesi = this.sessions.find(s => s.mulai === this.jamMulai);
-                const endSesi = this.sessions.find(s => s.selesai === this.jamSelesai);
+                const startSesi = this.sessions.find(s => clean(s.mulai) === mulai);
+                const endSesi = this.sessions.find(s => clean(s.selesai) === selesai);
                 if (startSesi && endSesi && startSesi.sesi <= endSesi.sesi) {
                     const arr = [];
                     for (let i = startSesi.sesi; i <= endSesi.sesi; i++) {

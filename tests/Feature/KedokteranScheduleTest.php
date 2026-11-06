@@ -122,7 +122,21 @@ class KedokteranScheduleTest extends TestCase
         $modul = Modul::first();
         $dosen = Dosen::first();
 
-        // Store
+        // 1. Create page dengan preset parameter dari klik slot matriks (tanggal, sesi, modul, kelompok)
+        $responseCreate = $this->actingAs($admin)->get("/admin/jadwals/create?tanggal=2026-11-20&sesi=3&modul_id={$modul->id}&kelompok=A.1");
+        $responseCreate->assertStatus(200);
+        $responseCreate->assertSee('2026-11-20');
+        $responseCreate->assertSee('Plotting Terpilih dari Sesi Matriks');
+        $responseCreate->assertSee('Sesi 3');
+        $preset = $responseCreate->viewData('preset');
+        $this->assertEquals('2026-11-20', $preset['tanggal']);
+        $this->assertEquals(3, $preset['sesi']);
+        $this->assertEquals('09:10', $preset['jam_mulai']);
+        $this->assertEquals('10:00', $preset['jam_selesai']);
+        $this->assertEquals((string)$modul->id, (string)$preset['modul_id']);
+        $this->assertEquals('A.1', $preset['kelompok']);
+
+        // 2. Store
         $response = $this->actingAs($admin)->post('/admin/jadwals', [
             'modul_id' => $modul->id,
             'dosen_id' => $dosen->id,
