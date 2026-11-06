@@ -314,8 +314,15 @@
                                     @endforeach
                                 </div>
                                 @if($activeTermin)
-                                    <div class="mt-2.5 p-2 bg-slate-50 rounded-xl border border-slate-100 text-[11px] text-slate-600">
-                                        <span class="font-bold text-slate-800">{{ $activeTermin->nama }}:</span> {{ $activeTermin->rentang_tanggal }}
+                                    <div class="mt-2.5 p-2 bg-slate-50 rounded-xl border border-slate-100 text-[11px] text-slate-600 flex items-center justify-between gap-1">
+                                        <div>
+                                            <span class="font-bold text-slate-800">{{ $activeTermin->nama }}:</span> {{ $activeTermin->rentang_tanggal }}
+                                        </div>
+                                        <a href="{{ route('admin.termins.show', $activeTermin) }}" 
+                                           class="text-[10px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition shrink-0"
+                                           title="Buka Laporan Beban Mengajar Dosen">
+                                            <i class="bi bi-file-earmark-spreadsheet"></i> Laporan
+                                        </a>
                                     </div>
                                 @endif
                             </div>

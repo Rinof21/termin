@@ -65,6 +65,7 @@ Route::middleware('auth')->group(function () {
         // Jadwal Termin Akademik (6-8 Termin per Semester)
         Route::post('termins/bulk-delete', [TerminController::class, 'bulkDelete'])->name('termins.bulk-delete');
         Route::post('termins/{termin}/activate', [TerminController::class, 'activate'])->name('termins.activate');
+        Route::get('termins/{termin}/export', [TerminController::class, 'export'])->name('termins.export');
         Route::resource('termins', TerminController::class);
 
         // Data Modul & Mata Kuliah di dalam Modul

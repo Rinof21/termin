@@ -62,6 +62,14 @@
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
+            @if($activeTermin)
+                <a href="{{ route('admin.termins.show', $activeTermin) }}" 
+                   class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
+                   title="Lihat Laporan Beban Mengajar Dosen pada Termin Aktif">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    <span>Laporan Mengajar Dosen</span>
+                </a>
+            @endif
             <a href="{{ route('admin.jadwals.index') }}" 
                class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-xl border border-slate-200 shadow-xs transition flex items-center gap-1.5">
                 <i class="bi bi-calendar3 text-brand-600"></i>
@@ -207,17 +215,24 @@
 
                             <!-- Nama Termin -->
                             <td class="px-5 py-3.5">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 rounded-xl font-bold flex items-center justify-center text-xs shrink-0 {{ $termin->is_aktif ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700' }}">
+                                <a href="{{ route('admin.termins.show', $termin) }}" 
+                                   class="flex items-center gap-2.5 group cursor-pointer"
+                                   title="Klik untuk membuka Laporan Mengajar Dosen selama periode {{ $termin->nama }}">
+                                    <div class="w-8 h-8 rounded-xl font-bold flex items-center justify-center text-xs shrink-0 {{ $termin->is_aktif ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 group-hover:bg-brand-50 group-hover:text-brand-700' }} transition">
                                         T{{ $termin->nomor }}
                                     </div>
                                     <div>
-                                        <span class="font-bold text-slate-900 text-sm block">{{ $termin->nama }}</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="font-bold text-slate-900 text-sm group-hover:text-brand-600 group-hover:underline transition">{{ $termin->nama }}</span>
+                                            <span class="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 opacity-90 group-hover:opacity-100">
+                                                <i class="bi bi-file-earmark-spreadsheet"></i> Laporan
+                                            </span>
+                                        </div>
                                         @if($termin->keterangan)
-                                            <span class="text-[11px] text-slate-400 block truncate max-w-xs">{{ $termin->keterangan }}</span>
+                                            <span class="text-[11px] text-slate-400 block truncate max-w-xs mt-0.5">{{ $termin->keterangan }}</span>
                                         @endif
                                     </div>
-                                </div>
+                                </a>
                             </td>
 
                             <!-- Semester & Tahun -->
@@ -325,6 +340,12 @@
                             <!-- Tindakan Edit / Hapus -->
                             <td class="px-5 py-3.5 text-right">
                                 <div class="inline-flex items-center gap-1">
+                                    <a href="{{ route('admin.termins.show', $termin) }}" 
+                                       class="p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition" 
+                                       title="Buka Laporan Mengajar Dosen (Spreadsheet)">
+                                        <i class="bi bi-file-earmark-spreadsheet text-base"></i>
+                                    </a>
+
                                     <a href="{{ route('admin.termins.edit', $termin) }}" 
                                        class="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition" 
                                        title="Edit Termin">

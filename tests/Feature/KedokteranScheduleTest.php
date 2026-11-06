@@ -463,6 +463,18 @@ class KedokteranScheduleTest extends TestCase
         $response = $this->actingAs($admin)->delete("/admin/termins/{$termin->id}");
         $response->assertRedirect('/admin/termins?tipe=Ganjil');
         $this->assertDatabaseMissing('termins', ['id' => $termin->id]);
+
+        // 8. Test Laporan Mengajar Dosen (Show & Export)
+        $responseReport = $this->actingAs($admin)->get("/admin/termins/{$termin4->id}");
+        $responseReport->assertStatus(200);
+        $responseReport->assertSee('Laporan Beban Mengajar Dosen');
+        $responseReport->assertSee('TOTAL LENGKAP final rev');
+        $responseReport->assertSee('Minggu 1');
+        $responseReport->assertSee('Kekurangan atau kelebihan Beban');
+
+        $responseExport = $this->actingAs($admin)->get("/admin/termins/{$termin4->id}/export");
+        $responseExport->assertStatus(200);
+        $responseExport->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     }
 
     public function test_semester_crud_and_activation(): void
