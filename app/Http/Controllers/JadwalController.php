@@ -212,7 +212,10 @@ class JadwalController extends Controller
                     }
                 }
 
-                $hariSlug = $daySlugMap[$targetDate->dayOfWeek] ?? 'senin';
+                // Jika user tidak memilih 'hari' secara spesifik, gunakan hari dari tanggal kalender
+                if (!$request->has('hari')) {
+                    $hariSlug = $daySlugMap[$targetDate->dayOfWeek] ?? 'senin';
+                }
             } catch (\Exception $e) {
                 // Abaikan jika format tidak valid
             }

@@ -122,7 +122,7 @@
                     <!-- Tab Minggu (Minggu 1 s/d Minggu 6) -->
                     <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
                         @foreach($daftarMinggu as $m)
-                            <a href="{{ route('admin.jadwals.matrix', array_merge(request()->query(), ['minggu' => $m['nomor']])) }}" 
+                            <a href="{{ route('admin.jadwals.matrix', array_merge(request()->except('tanggal'), ['minggu' => $m['nomor']])) }}" 
                                class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex flex-col items-center leading-tight {{ $mingguNomor == $m['nomor'] ? 'bg-brand-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200' }}">
                                 <span>{{ $m['label'] }}</span>
                                 <span class="text-[9px] font-normal {{ $mingguNomor == $m['nomor'] ? 'text-brand-100' : 'text-slate-400' }}">
@@ -138,7 +138,7 @@
                     <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 flex-wrap sm:flex-nowrap">
                         <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">HARI:</span>
                         @foreach($days as $d)
-                            <a href="{{ route('admin.jadwals.matrix', array_merge(request()->query(), ['hari' => $d['slug']])) }}" 
+                            <a href="{{ route('admin.jadwals.matrix', array_merge(request()->except('tanggal'), ['hari' => $d['slug']])) }}" 
                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition relative {{ $selectedDay['slug'] === $d['slug'] ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700' }}">
                                 <span>{{ $d['nama'] }}</span>
                                 <span class="text-[10px] opacity-75 font-normal">({{ $d['short_date'] }})</span>
@@ -185,7 +185,7 @@
                     @endphp
                     <div>
                         @if($prevIndex !== null)
-                            <a href="{{ route('admin.jadwals.matrix', array_merge(request()->query(), ['hari' => $days[$prevIndex]['slug']])) }}" 
+                            <a href="{{ route('admin.jadwals.matrix', array_merge(request()->except('tanggal'), ['hari' => $days[$prevIndex]['slug']])) }}" 
                                class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition shadow-2xs no-print">
                                 <i class="bi bi-chevron-left"></i>
                                 <span>{{ $days[$prevIndex]['nama'] }}</span>
@@ -210,7 +210,7 @@
 
                     <div>
                         @if($nextIndex !== null)
-                            <a href="{{ route('admin.jadwals.matrix', array_merge(request()->query(), ['hari' => $days[$nextIndex]['slug']])) }}" 
+                            <a href="{{ route('admin.jadwals.matrix', array_merge(request()->except('tanggal'), ['hari' => $days[$nextIndex]['slug']])) }}" 
                                class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition shadow-2xs no-print">
                                 <span>{{ $days[$nextIndex]['nama'] }}</span>
                                 <i class="bi bi-chevron-right"></i>

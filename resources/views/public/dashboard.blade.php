@@ -357,7 +357,7 @@
                             <!-- Tab Minggu (Minggu 1 s/d Minggu 6) -->
                             <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
                                 @foreach($daftarMinggu as $m)
-                                    <a href="{{ route('home', array_merge(request()->query(), ['view' => 'matrix', 'minggu' => $m['nomor']])) }}" 
+                                    <a href="{{ route('home', array_merge(request()->except('tanggal'), ['view' => 'matrix', 'minggu' => $m['nomor']])) }}" 
                                        class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex flex-col items-center leading-tight {{ $mingguNomor == $m['nomor'] ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200' }}">
                                         <span>{{ $m['label'] }}</span>
                                         <span class="text-[9px] font-normal {{ $mingguNomor == $m['nomor'] ? 'text-emerald-100' : 'text-slate-400' }}">
@@ -373,7 +373,7 @@
                             <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 flex-wrap sm:flex-nowrap">
                                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">HARI:</span>
                                 @foreach($days as $d)
-                                    <a href="{{ route('home', array_merge(request()->query(), ['view' => 'matrix', 'hari' => $d['slug']])) }}" 
+                                    <a href="{{ route('home', array_merge(request()->except('tanggal'), ['view' => 'matrix', 'hari' => $d['slug']])) }}" 
                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition relative {{ $selectedDay['slug'] === $d['slug'] ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700' }}">
                                         <span>{{ $d['nama'] }}</span>
                                         <span class="text-[10px] opacity-75 font-normal">({{ $d['short_date'] }})</span>
@@ -429,7 +429,7 @@
                             @endphp
                             <div>
                                 @if($prevIndex !== null)
-                                    <a href="{{ route('home', array_merge(request()->query(), ['view' => 'matrix', 'hari' => $days[$prevIndex]['slug']])) }}" 
+                                    <a href="{{ route('home', array_merge(request()->except('tanggal'), ['view' => 'matrix', 'hari' => $days[$prevIndex]['slug']])) }}" 
                                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition shadow-2xs no-print">
                                         <i class="bi bi-chevron-left"></i>
                                         <span>{{ $days[$prevIndex]['nama'] }}</span>
@@ -454,7 +454,7 @@
 
                             <div>
                                 @if($nextIndex !== null)
-                                    <a href="{{ route('home', array_merge(request()->query(), ['view' => 'matrix', 'hari' => $days[$nextIndex]['slug']])) }}" 
+                                    <a href="{{ route('home', array_merge(request()->except('tanggal'), ['view' => 'matrix', 'hari' => $days[$nextIndex]['slug']])) }}" 
                                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition shadow-2xs no-print">
                                         <span>{{ $days[$nextIndex]['nama'] }}</span>
                                         <i class="bi bi-chevron-right"></i>
@@ -687,7 +687,7 @@
                             <span>Filter Jadwal</span>
                         </span>
                         <button type="button" 
-                                @click="calendarFilterModul = ''; calendarFilterDosen = ''; calendarFilterKelompok = ''; refetchCalendarEvents()" 
+                                @click="resetCalendarFilters()" 
                                 class="text-[11px] text-brand-600 hover:text-brand-700 font-semibold transition">
                             Reset
                         </button>
@@ -707,13 +707,69 @@
 
                         <div>
                             <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pilih Dosen</label>
-                            <select x-model="calendarFilterDosen" @change="refetchCalendarEvents()"
-                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                                <option value="">Semua Dosen</option>
-                                @foreach($dosens as $d)
-                                    <option value="{{ $d->id }}">[{{ $d->kode }}] {{ $d->nama }}</option>
-                                @endforeach
-                            </select>
+                            <div class="relative" @click.away="closeDosenDropdown()">
+                                <div class="relative">
+                                    <input type="text"
+                                           x-model="dosenSearchQuery"
+                                           @focus="isDosenDropdownOpen = true"
+                                           @input="isDosenDropdownOpen = true"
+                                           @keydown.escape="closeDosenDropdown()"
+                                           @keydown.enter.prevent="selectFirstFilteredDosen()"
+                                           placeholder="Ketik nama atau kode dosen..."
+                                           autocomplete="off"
+                                           class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                                        <i class="bi bi-search text-[11px]"></i>
+                                    </div>
+                                    <button type="button"
+                                            x-show="calendarFilterDosen || dosenSearchQuery"
+                                            @click.stop="clearDosenFilter()"
+                                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 transition"
+                                            title="Hapus pilihan dosen">
+                                        <i class="bi bi-x-circle-fill text-xs"></i>
+                                    </button>
+                                    <div x-show="!calendarFilterDosen && !dosenSearchQuery" class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">
+                                        <i class="bi bi-chevron-expand text-xs"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Dropdown List -->
+                                <div x-show="isDosenDropdownOpen"
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="opacity-100 scale-100"
+                                     x-transition:leave-end="opacity-0 scale-95"
+                                     class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto py-1 divide-y divide-slate-50"
+                                     style="display: none;">
+                                    
+                                    <button type="button"
+                                            @click="selectDosenFilter('', '')"
+                                            class="w-full text-left px-3 py-2 text-xs hover:bg-brand-50 hover:text-brand-700 flex items-center justify-between transition"
+                                            :class="!calendarFilterDosen ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-700 font-medium'">
+                                        <span>Semua Dosen</span>
+                                        <span x-show="!calendarFilterDosen" class="text-brand-600"><i class="bi bi-check2"></i></span>
+                                    </button>
+
+                                    <template x-for="d in filteredDosenList" :key="d.id">
+                                        <button type="button"
+                                                @click="selectDosenFilter(d.id, d.label)"
+                                                class="w-full text-left px-3 py-2 text-xs hover:bg-brand-50 hover:text-brand-700 flex items-center justify-between gap-2 transition"
+                                                :class="calendarFilterDosen == d.id ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-700 font-medium'">
+                                            <div class="truncate">
+                                                <span class="font-mono text-[11px] text-slate-500 font-normal mr-1" x-text="'[' + d.kode + ']'"></span>
+                                                <span x-text="d.nama"></span>
+                                            </div>
+                                            <span x-show="calendarFilterDosen == d.id" class="text-brand-600 shrink-0"><i class="bi bi-check2"></i></span>
+                                        </button>
+                                    </template>
+
+                                    <div x-show="filteredDosenList.length === 0" class="px-3 py-3 text-center text-xs text-slate-400">
+                                        Dosen tidak ditemukan
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div>
@@ -938,6 +994,76 @@
                 calendarFilterModul: '',
                 calendarFilterDosen: '',
                 calendarFilterKelompok: '',
+
+                dosenList: {!! json_encode($dosens->map(function($d) {
+                    return [
+                        'id' => (string)$d->id,
+                        'kode' => $d->kode,
+                        'nama' => $d->nama,
+                        'label' => '[' . $d->kode . '] ' . $d->nama,
+                    ];
+                })->values()) !!},
+                dosenSearchQuery: '',
+                isDosenDropdownOpen: false,
+
+                get filteredDosenList() {
+                    if (!this.dosenSearchQuery || !this.dosenSearchQuery.trim()) {
+                        return this.dosenList;
+                    }
+                    const q = this.dosenSearchQuery.toLowerCase().trim();
+                    if (this.calendarFilterDosen) {
+                        const cur = this.dosenList.find(d => String(d.id) === String(this.calendarFilterDosen));
+                        if (cur && cur.label.toLowerCase() === q) {
+                            return this.dosenList;
+                        }
+                    }
+                    return this.dosenList.filter(d => 
+                        (d.kode && d.kode.toLowerCase().includes(q)) ||
+                        (d.nama && d.nama.toLowerCase().includes(q))
+                    );
+                },
+
+                selectDosenFilter(id, label) {
+                    this.calendarFilterDosen = id ? String(id) : '';
+                    this.dosenSearchQuery = label || '';
+                    this.isDosenDropdownOpen = false;
+                    this.refetchCalendarEvents();
+                },
+
+                selectFirstFilteredDosen() {
+                    if (this.filteredDosenList.length > 0) {
+                        const first = this.filteredDosenList[0];
+                        this.selectDosenFilter(first.id, first.label);
+                    }
+                },
+
+                clearDosenFilter() {
+                    this.calendarFilterDosen = '';
+                    this.dosenSearchQuery = '';
+                    this.isDosenDropdownOpen = false;
+                    this.refetchCalendarEvents();
+                },
+
+                closeDosenDropdown() {
+                    this.isDosenDropdownOpen = false;
+                    if (this.calendarFilterDosen) {
+                        const found = this.dosenList.find(d => String(d.id) === String(this.calendarFilterDosen));
+                        if (found) {
+                            this.dosenSearchQuery = found.label;
+                        }
+                    } else {
+                        this.dosenSearchQuery = '';
+                    }
+                },
+
+                resetCalendarFilters() {
+                    this.calendarFilterModul = '';
+                    this.calendarFilterDosen = '';
+                    this.calendarFilterKelompok = '';
+                    this.dosenSearchQuery = '';
+                    this.isDosenDropdownOpen = false;
+                    this.refetchCalendarEvents();
+                },
 
                 init() {
                     if (this.activeView === 'calendar') {

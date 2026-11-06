@@ -209,8 +209,8 @@
                         <span>Filter Jadwal</span>
                     </span>
                     <button type="button" 
-                            x-show="filterModul || filterDosen || filterKelompok" 
-                            @click="filterModul = ''; filterDosen = ''; filterKelompok = ''; refetchCalendar()"
+                            x-show="filterModul || filterDosen || filterKelompok || dosenSearchQuery" 
+                            @click="resetAllFilters()"
                             class="text-[11px] font-semibold text-brand-600 hover:text-brand-800 transition">
                         Reset Filter
                     </button>
@@ -234,13 +234,69 @@
                         <!-- Filter Dosen -->
                         <div>
                             <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Dosen Pengampu</label>
-                            <select x-model="filterDosen" @change="refetchCalendar()" 
-                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                                <option value="">Semua Dosen</option>
-                                @foreach($dosens as $d)
-                                    <option value="{{ $d->id }}">[{{ $d->kode }}] {{ $d->nama }}</option>
-                                @endforeach
-                            </select>
+                            <div class="relative" @click.away="closeDosenDropdown()">
+                                <div class="relative">
+                                    <input type="text"
+                                           x-model="dosenSearchQuery"
+                                           @focus="isDosenDropdownOpen = true"
+                                           @input="isDosenDropdownOpen = true"
+                                           @keydown.escape="closeDosenDropdown()"
+                                           @keydown.enter.prevent="selectFirstFilteredDosen()"
+                                           placeholder="Ketik nama atau kode dosen..."
+                                           autocomplete="off"
+                                           class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                                        <i class="bi bi-search text-[11px]"></i>
+                                    </div>
+                                    <button type="button"
+                                            x-show="filterDosen || dosenSearchQuery"
+                                            @click.stop="clearDosenFilter()"
+                                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 transition"
+                                            title="Hapus pilihan dosen">
+                                        <i class="bi bi-x-circle-fill text-xs"></i>
+                                    </button>
+                                    <div x-show="!filterDosen && !dosenSearchQuery" class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">
+                                        <i class="bi bi-chevron-expand text-xs"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Dropdown List -->
+                                <div x-show="isDosenDropdownOpen"
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="opacity-100 scale-100"
+                                     x-transition:leave-end="opacity-0 scale-95"
+                                     class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto py-1 divide-y divide-slate-50"
+                                     style="display: none;">
+                                    
+                                    <button type="button"
+                                            @click="selectDosenFilter('', '')"
+                                            class="w-full text-left px-3 py-2 text-xs hover:bg-brand-50 hover:text-brand-700 flex items-center justify-between transition"
+                                            :class="!filterDosen ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-700 font-medium'">
+                                        <span>Semua Dosen</span>
+                                        <span x-show="!filterDosen" class="text-brand-600"><i class="bi bi-check2"></i></span>
+                                    </button>
+
+                                    <template x-for="d in filteredDosenList" :key="d.id">
+                                        <button type="button"
+                                                @click="selectDosenFilter(d.id, d.label)"
+                                                class="w-full text-left px-3 py-2 text-xs hover:bg-brand-50 hover:text-brand-700 flex items-center justify-between gap-2 transition"
+                                                :class="filterDosen == d.id ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-700 font-medium'">
+                                            <div class="truncate">
+                                                <span class="font-mono text-[11px] text-slate-500 font-normal mr-1" x-text="'[' + d.kode + ']'"></span>
+                                                <span x-text="d.nama"></span>
+                                            </div>
+                                            <span x-show="filterDosen == d.id" class="text-brand-600 shrink-0"><i class="bi bi-check2"></i></span>
+                                        </button>
+                                    </template>
+
+                                    <div x-show="filteredDosenList.length === 0" class="px-3 py-3 text-center text-xs text-slate-400">
+                                        Dosen tidak ditemukan
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Filter Kelompok -->
@@ -481,6 +537,77 @@
             filterModul: '',
             filterDosen: '',
             filterKelompok: '',
+
+            dosenList: {!! json_encode($dosens->map(function($d) {
+                return [
+                    'id' => (string)$d->id,
+                    'kode' => $d->kode,
+                    'nama' => $d->nama,
+                    'label' => '[' . $d->kode . '] ' . $d->nama,
+                ];
+            })->values()) !!},
+            dosenSearchQuery: '',
+            isDosenDropdownOpen: false,
+
+            get filteredDosenList() {
+                if (!this.dosenSearchQuery || !this.dosenSearchQuery.trim()) {
+                    return this.dosenList;
+                }
+                const q = this.dosenSearchQuery.toLowerCase().trim();
+                if (this.filterDosen) {
+                    const cur = this.dosenList.find(d => String(d.id) === String(this.filterDosen));
+                    if (cur && cur.label.toLowerCase() === q) {
+                        return this.dosenList;
+                    }
+                }
+                return this.dosenList.filter(d => 
+                    (d.kode && d.kode.toLowerCase().includes(q)) ||
+                    (d.nama && d.nama.toLowerCase().includes(q))
+                );
+            },
+
+            selectDosenFilter(id, label) {
+                this.filterDosen = id ? String(id) : '';
+                this.dosenSearchQuery = label || '';
+                this.isDosenDropdownOpen = false;
+                this.refetchCalendar();
+            },
+
+            selectFirstFilteredDosen() {
+                if (this.filteredDosenList.length > 0) {
+                    const first = this.filteredDosenList[0];
+                    this.selectDosenFilter(first.id, first.label);
+                }
+            },
+
+            clearDosenFilter() {
+                this.filterDosen = '';
+                this.dosenSearchQuery = '';
+                this.isDosenDropdownOpen = false;
+                this.refetchCalendar();
+            },
+
+            closeDosenDropdown() {
+                this.isDosenDropdownOpen = false;
+                if (this.filterDosen) {
+                    const found = this.dosenList.find(d => String(d.id) === String(this.filterDosen));
+                    if (found) {
+                        this.dosenSearchQuery = found.label;
+                    }
+                } else {
+                    this.dosenSearchQuery = '';
+                }
+            },
+
+            resetAllFilters() {
+                this.filterModul = '';
+                this.filterDosen = '';
+                this.filterKelompok = '';
+                this.dosenSearchQuery = '';
+                this.isDosenDropdownOpen = false;
+                this.refetchCalendar();
+            },
+
             calendar: null,
             hasSelectedEvent: false,
             activeEvent: {},
