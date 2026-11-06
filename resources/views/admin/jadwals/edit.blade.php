@@ -111,28 +111,105 @@
 
             <!-- Dosen Pengampu & Dosen Pendamping -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="dosen_id" class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                <!-- Dosen Pengampu Utama (Bisa Dicari dengan Cara Diketik) -->
+                <div x-data="searchableDosenSelect(@js($dosens->map(fn($d) => ['id' => $d->id, 'kode' => $d->kode, 'nama' => $d->nama])), @js(old('dosen_id', $jadwal->dosen_id ?? '')))"
+                     @set-dosen-utama.window="selectById($event.detail)"
+                     class="relative">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
                         Dosen Pengampu Utama
                     </label>
-                    <select name="dosen_id" id="dosen_id"
-                            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 transition @error('dosen_id') border-rose-300 @enderror">
-                        <option value="">-- Pilih Dosen Pengampu --</option>
-                        @foreach($dosens as $dosen)
-                            <option value="{{ $dosen->id }}" {{ old('dosen_id', $jadwal->dosen_id) == $dosen->id ? 'selected' : '' }}>
-                                [{{ $dosen->kode }}] {{ $dosen->nama }}
-                            </option>
-                        @endforeach
-                    </select>
+
+                    <!-- Hidden Input untuk Dikirimkan Form -->
+                    <input type="hidden" name="dosen_id" id="dosen_id" :value="selectedId">
+
+                    <!-- Tombol Pemicu Dropdown -->
+                    <div class="relative">
+                        <div @click="toggle()"
+                             role="button"
+                             tabindex="0"
+                             class="w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm flex items-center justify-between text-left transition cursor-pointer select-none focus:outline-none focus:ring-4 focus:ring-brand-500/10 @error('dosen_id') border-rose-300 @else border-slate-200 @enderror"
+                             :class="isOpen ? 'bg-white border-brand-500 ring-4 ring-brand-500/10' : 'bg-slate-50 hover:bg-white'">
+                            <span class="truncate" 
+                                  :class="selectedId ? 'font-semibold text-slate-900' : 'text-slate-400'"
+                                  x-text="selectedLabel"></span>
+                            
+                            <div class="flex items-center gap-1 shrink-0 ml-2">
+                                <span role="button" x-show="selectedId" @click.stop="clear()" 
+                                      class="text-slate-400 hover:text-rose-600 p-0.5 rounded transition cursor-pointer" title="Kosongkan">
+                                    <i class="bi bi-x-circle-fill text-xs"></i>
+                                </span>
+                                <i class="bi bi-chevron-down text-xs text-slate-400 transition-transform duration-200" :class="isOpen ? 'rotate-180 text-brand-600' : ''"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Panel Pencarian -->
+                    <div x-cloak x-show="isOpen" @click.outside="isOpen = false"
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl shadow-xl border border-slate-200 p-2.5 z-50 space-y-2">
+                        
+                        <!-- Input Pencarian (Ketik untuk Mencari) -->
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <input type="text" x-ref="searchInput" x-model="search"
+                                   placeholder="Ketik inisial [EFI] atau nama dosen..."
+                                   class="w-full pl-9 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                            <button type="button" x-show="search" @click="search = ''; $refs.searchInput.focus()"
+                                    class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+
+                        <!-- Daftar Opsi Dosen yang Terfilter -->
+                        <div class="max-h-56 overflow-y-auto space-y-1 text-xs">
+                            <!-- Opsi Kosongkan / Reset -->
+                            <div @click="choose('')" 
+                                 class="px-3 py-2 rounded-xl cursor-pointer hover:bg-slate-50 flex items-center justify-between transition"
+                                 :class="!selectedId ? 'bg-brand-50 text-brand-700 font-bold' : 'text-slate-400 italic'">
+                                <span>-- Kosongkan Pilihan Dosen --</span>
+                                <i x-show="!selectedId" class="bi bi-check text-brand-600 font-bold"></i>
+                            </div>
+
+                            <!-- Opsi Dosen -->
+                            <template x-for="d in filteredDosens" :key="d.id">
+                                <div @click="choose(d.id)"
+                                     class="px-3 py-2 rounded-xl cursor-pointer hover:bg-brand-50 transition flex items-center justify-between"
+                                     :class="String(d.id) === String(selectedId) ? 'bg-brand-50 text-brand-700 font-bold' : 'text-slate-700'">
+                                    <div class="flex items-center gap-2 truncate">
+                                        <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold shrink-0"
+                                              :class="String(d.id) === String(selectedId) ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'"
+                                              x-text="'[' + d.kode + ']'"></span>
+                                        <span class="truncate" x-text="d.nama"></span>
+                                    </div>
+                                    <i x-show="String(d.id) === String(selectedId)" class="bi bi-check-lg text-brand-600 font-bold ml-2 shrink-0"></i>
+                                </div>
+                            </template>
+
+                            <!-- Keadaan Tidak Ditemukan -->
+                            <div x-show="filteredDosens.length === 0" class="py-4 text-center text-slate-400 italic">
+                                Tidak ada dosen cocok dengan "<span x-text="search" class="font-semibold text-slate-600"></span>"
+                            </div>
+                        </div>
+                    </div>
+
                     @error('dosen_id')
                         <p class="mt-1 text-xs text-rose-500">{{ $message }}</p>
                     @enderror
                 </div>
 
+                <!-- Dosen Pengampu (Bisa Dicari dengan Cara Diketik) -->
                 <div x-data="dosenPendampingPicker(@js($dosens->map(fn($d) => ['id' => $d->id, 'kode' => $d->kode, 'nama' => $d->nama])), @js(old('dosen_pendamping', $jadwal->dosen_pendamping ?? '')))"
-                     @set-dosen-pendamping.window="setFromCodes($event.detail)">
+                     @set-dosen-pendamping.window="setFromCodes($event.detail)"
+                     class="relative">
                     <div class="flex items-center justify-between mb-1.5">
-                        <label for="dosen_pendamping_select" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
                             Dosen Pengampu
                         </label>
                         <span class="text-[10px] text-slate-400 font-medium">Bisa pilih lebih dari 1</span>
@@ -142,14 +219,60 @@
                     <input type="hidden" name="dosen_pendamping" :value="selected.join(', ')">
 
                     <div class="space-y-2">
-                        <!-- Dropdown pilih data dosen -->
-                        <select id="dosen_pendamping_select" @change="addDosen($event.target.value); $event.target.value = '';"
-                                class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 transition">
-                            <option value="">+ Tambah Dosen Pengampu dari Data Dosen...</option>
-                            <template x-for="d in availableDosens" :key="d.kode">
-                                <option :value="d.kode" x-text="'[' + d.kode + '] ' + d.nama"></option>
-                            </template>
-                        </select>
+                        <!-- Trigger Dropdown Pencarian Dosen Pendamping -->
+                        <div class="relative">
+                            <div @click="toggle()"
+                                 role="button"
+                                 tabindex="0"
+                                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm flex items-center justify-between text-left transition cursor-pointer select-none hover:bg-white focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10"
+                                 :class="isOpen ? 'bg-white border-brand-500 ring-4 ring-brand-500/10' : 'bg-slate-50 hover:bg-white'">
+                                <span class="text-slate-500">+ Tambah Dosen Pengampu dari Data Dosen...</span>
+                                <i class="bi bi-chevron-down text-xs text-slate-400 transition-transform duration-200" :class="isOpen ? 'rotate-180 text-brand-600' : ''"></i>
+                            </div>
+
+                            <!-- Dropdown Panel Pencarian -->
+                            <div x-cloak x-show="isOpen" @click.outside="isOpen = false"
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl shadow-xl border border-slate-200 p-2.5 z-50 space-y-2">
+                                
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
+                                        <i class="bi bi-search"></i>
+                                    </div>
+                                    <input type="text" x-ref="pendampingSearchInput" x-model="search"
+                                           placeholder="Ketik inisial [DES] atau nama dosen..."
+                                           class="w-full pl-9 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                                    <button type="button" x-show="search" @click="search = ''; $refs.pendampingSearchInput.focus()"
+                                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+
+                                <div class="max-h-56 overflow-y-auto space-y-1 text-xs">
+                                    <template x-for="d in availableDosens" :key="d.kode">
+                                        <div @click="addDosen(d.kode)"
+                                             class="px-3 py-2 rounded-xl cursor-pointer hover:bg-indigo-50 transition flex items-center justify-between text-slate-700">
+                                            <div class="flex items-center gap-2 truncate">
+                                                <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold shrink-0 bg-slate-100 text-slate-700 border border-slate-200"
+                                                      x-text="'[' + d.kode + ']'"></span>
+                                                <span class="truncate" x-text="d.nama"></span>
+                                            </div>
+                                            <span class="text-[10px] text-indigo-600 font-semibold shrink-0 ml-2">+ Tambah</span>
+                                        </div>
+                                    </template>
+
+                                    <div x-show="availableDosens.length === 0" class="py-4 text-center text-slate-400 italic">
+                                        <span x-show="!search">Semua dosen sudah terpilih</span>
+                                        <span x-show="search">Tidak ada dosen cocok dengan "<span x-text="search" class="font-semibold text-slate-600"></span>"</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Daftar Badge Dosen Terpilih -->
                         <div class="flex flex-wrap items-center gap-1.5 min-h-[38px] p-2 bg-slate-50/70 border border-dashed border-slate-200 rounded-xl">
@@ -387,6 +510,11 @@
                         elDosen.value = mk.dosen_id || '';
                     }
 
+                    // Dispatch event untuk update dosen pengampu utama secara reaktif di Alpine
+                    window.dispatchEvent(new CustomEvent('set-dosen-utama', { 
+                        detail: mk.dosen_id || '' 
+                    }));
+
                     const elRuangan = document.getElementById('ruangan');
                     if (elRuangan) {
                         elRuangan.value = mk.ruangan || '';
@@ -401,21 +529,111 @@
         };
     }
 
+    function searchableDosenSelect(dosenList, initialId = '') {
+        return {
+            dosenList: dosenList || [],
+            selectedId: initialId ? String(initialId) : '',
+            search: '',
+            isOpen: false,
+
+            get filteredDosens() {
+                if (!this.search.trim()) {
+                    return this.dosenList;
+                }
+                const q = this.search.toLowerCase().trim();
+                return this.dosenList.filter(d => 
+                    (d.kode && d.kode.toLowerCase().includes(q)) ||
+                    (d.nama && d.nama.toLowerCase().includes(q))
+                );
+            },
+
+            get selectedLabel() {
+                if (!this.selectedId) {
+                    return '-- Pilih Dosen Pengampu --';
+                }
+                const found = this.dosenList.find(d => String(d.id) === String(this.selectedId));
+                return found ? `[${found.kode}] ${found.nama}` : '-- Pilih Dosen Pengampu --';
+            },
+
+            toggle() {
+                this.isOpen = !this.isOpen;
+                if (this.isOpen) {
+                    this.search = '';
+                    this.$nextTick(() => {
+                        if (this.$refs.searchInput) {
+                            this.$refs.searchInput.focus();
+                        }
+                    });
+                }
+            },
+
+            choose(id) {
+                this.selectedId = id ? String(id) : '';
+                this.isOpen = false;
+                this.search = '';
+                const el = document.getElementById('dosen_id');
+                if (el) el.value = this.selectedId;
+            },
+
+            clear() {
+                this.selectedId = '';
+                this.isOpen = false;
+                this.search = '';
+                const el = document.getElementById('dosen_id');
+                if (el) el.value = '';
+            },
+
+            selectById(id) {
+                this.selectedId = id ? String(id) : '';
+                const el = document.getElementById('dosen_id');
+                if (el) el.value = this.selectedId;
+            }
+        };
+    }
+
     function dosenPendampingPicker(dosenList, initialValue = '') {
         const picker = {
             dosenList: dosenList || [],
             selected: initialValue ? initialValue.split(',').map(s => s.trim()).filter(s => s.length > 0) : [],
+            search: '',
+            isOpen: false,
+
             get availableDosens() {
-                return this.dosenList.filter(d => !this.selected.includes(d.kode));
+                let list = this.dosenList.filter(d => !this.selected.includes(d.kode));
+                if (!this.search.trim()) {
+                    return list;
+                }
+                const q = this.search.toLowerCase().trim();
+                return list.filter(d => 
+                    (d.kode && d.kode.toLowerCase().includes(q)) ||
+                    (d.nama && d.nama.toLowerCase().includes(q))
+                );
             },
+
+            toggle() {
+                this.isOpen = !this.isOpen;
+                if (this.isOpen) {
+                    this.search = '';
+                    this.$nextTick(() => {
+                        if (this.$refs.pendampingSearchInput) {
+                            this.$refs.pendampingSearchInput.focus();
+                        }
+                    });
+                }
+            },
+
             addDosen(kode) {
                 if (kode && !this.selected.includes(kode)) {
                     this.selected.push(kode);
+                    this.search = '';
                 }
+                this.isOpen = false;
             },
+
             removeDosen(idx) {
                 this.selected.splice(idx, 1);
             },
+
             setFromCodes(codes) {
                 if (!codes) {
                     this.selected = [];
@@ -423,6 +641,7 @@
                 }
                 this.selected = codes.split(',').map(s => s.trim()).filter(s => s.length > 0);
             },
+
             getDosenName(kode) {
                 const found = this.dosenList.find(d => d.kode === kode);
                 return found ? found.nama : kode;

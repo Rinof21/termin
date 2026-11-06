@@ -7,7 +7,7 @@
 @endsection
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ viewMode: (new URLSearchParams(window.location.search).get('view') || localStorage.getItem('modul_view_mode') || 'grid') }">
     <!-- Header Halaman -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -95,10 +95,11 @@
             </a>
         </div>
 
-        <!-- Toolbar Pencarian -->
-        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs">
-            <form method="GET" action="{{ route('admin.moduls.index') }}" class="flex items-center gap-3">
+        <!-- Toolbar Pencarian & Pengalih Tampilan -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <form method="GET" action="{{ route('admin.moduls.index') }}" class="flex items-center gap-3 flex-1">
                 <input type="hidden" name="tipe" value="{{ $tipeFilter }}">
+                <input type="hidden" name="view" :value="viewMode">
                 <div class="relative flex-1">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i class="bi bi-search"></i>
@@ -116,11 +117,31 @@
                     </a>
                 @endif
             </form>
+
+            <!-- Pengalih Tampilan (Kartu / Tabel) -->
+            <div class="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200/80 shrink-0 self-end sm:self-auto">
+                <button type="button" 
+                        @click="viewMode = 'grid'; localStorage.setItem('modul_view_mode', 'grid')"
+                        :class="viewMode === 'grid' ? 'bg-white text-brand-700 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800 font-medium'"
+                        class="px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5"
+                        title="Tampilan Kartu (Grid)">
+                    <i class="bi bi-grid-fill"></i>
+                    <span>Kartu</span>
+                </button>
+                <button type="button" 
+                        @click="viewMode = 'table'; localStorage.setItem('modul_view_mode', 'table')"
+                        :class="viewMode === 'table' ? 'bg-white text-brand-700 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800 font-medium'"
+                        class="px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5"
+                        title="Tampilan Tabel">
+                    <i class="bi bi-table"></i>
+                    <span>Tabel</span>
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Grid Kartu Modul -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+    <!-- 1. Tampilan Grid Kartu Modul -->
+    <div x-show="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         @forelse($moduls as $modul)
             <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between hover:shadow-md transition overflow-hidden">
                 <div class="h-2 w-full" style="background-color: {{ $modul->warna }};"></div>
@@ -260,6 +281,186 @@
                 @endif
             </div>
         @endforelse
+    </div>
+
+    <!-- 2. Tampilan Tabel Modul -->
+    <div x-cloak x-show="viewMode === 'table'" class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-50/75 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    <tr>
+                        <th class="px-5 py-3.5 text-center">No.</th>
+                        <th class="px-5 py-3.5">Kode</th>
+                        <th class="px-5 py-3.5">Nama Modul</th>
+                        <th class="px-5 py-3.5">Semester & Termin</th>
+                        <th class="px-5 py-3.5">Koordinator</th>
+                        <th class="px-5 py-3.5 text-center">Mata Kuliah</th>
+                        <th class="px-5 py-3.5 text-center">Jadwal Terplot</th>
+                        <th class="px-5 py-3.5 text-center">Status</th>
+                        <th class="px-5 py-3.5 text-right">Tindakan</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-xs">
+                    @forelse($moduls as $modul)
+                        @php
+                            $isAktif = $modul->tipe_semester === $activeSemester;
+                        @endphp
+                        <tr class="hover:bg-slate-50/70 transition group {{ $isAktif ? 'bg-emerald-50/15' : '' }}">
+                            <!-- No -->
+                            <td class="px-5 py-4 text-center font-semibold text-slate-400">
+                                {{ $moduls->firstItem() + $loop->index }}
+                            </td>
+
+                            <!-- Kode -->
+                            <td class="px-5 py-4 whitespace-nowrap">
+                                <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-md inline-flex items-center gap-1.5"
+                                      style="background-color: {{ $modul->warna }}18; color: {{ $modul->warna }}; border: 1px solid {{ $modul->warna }}40;">
+                                    <span class="w-2 h-2 rounded-full" style="background-color: {{ $modul->warna }};"></span>
+                                    <span>{{ $modul->kode }}</span>
+                                </span>
+                            </td>
+
+                            <!-- Nama Modul -->
+                            <td class="px-5 py-4">
+                                <a href="{{ route('admin.moduls.mata-kuliahs.index', $modul->id) }}" 
+                                   class="font-bold text-slate-900 hover:text-brand-600 transition flex items-center gap-1.5 group/link text-sm">
+                                    <span>{{ $modul->nama }}</span>
+                                    <i class="bi bi-arrow-right text-[10px] text-slate-300 group-hover/link:text-brand-600 group-hover/link:translate-x-0.5 transition"></i>
+                                </a>
+                                @if($modul->keterangan)
+                                    <p class="text-[11px] text-slate-400 mt-0.5 max-w-xs truncate" title="{{ $modul->keterangan }}">
+                                        {{ $modul->keterangan }}
+                                    </p>
+                                @endif
+                            </td>
+
+                            <!-- Semester & Termin -->
+                            <td class="px-5 py-4 whitespace-nowrap">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200/80">
+                                        {{ $modul->kode_tahun_semester }}
+                                    </span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ $modul->tipe_semester === 'Ganjil' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
+                                        {{ $modul->tipe_semester }}
+                                    </span>
+                                    <span class="text-[11px] font-semibold text-slate-600">
+                                        {{ $modul->termin }}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Koordinator -->
+                            <td class="px-5 py-4">
+                                @if($modul->koordinator)
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="px-1.5 py-0.5 bg-amber-50 border border-amber-200 rounded text-[10px] font-mono font-bold text-amber-800">
+                                            [{{ $modul->koordinator->kode }}]
+                                        </span>
+                                        <span class="text-xs text-slate-800 font-semibold truncate max-w-[150px]" title="{{ $modul->koordinator->nama }}">
+                                            {{ $modul->koordinator->nama }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <span class="text-xs text-slate-400 italic">Belum ditentukan</span>
+                                @endif
+                            </td>
+
+                            <!-- Mata Kuliah Count -->
+                            <td class="px-5 py-4 text-center whitespace-nowrap">
+                                <a href="{{ route('admin.moduls.mata-kuliahs.index', $modul->id) }}" 
+                                   class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-700 hover:bg-brand-100 border border-brand-200/80 transition"
+                                   title="Lihat seluruh materi di modul ini">
+                                    <i class="bi bi-card-checklist"></i>
+                                    <span>{{ $modul->mata_kuliahs_count }} Materi</span>
+                                </a>
+                            </td>
+
+                            <!-- Jadwal Terplot Count -->
+                            <td class="px-5 py-4 text-center whitespace-nowrap">
+                                <a href="{{ route('admin.jadwals.table', ['modul_id' => $modul->id]) }}" 
+                                   class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition"
+                                   title="Lihat jadwal modul di kalender/tabel">
+                                    <i class="bi bi-calendar-check text-emerald-600"></i>
+                                    <span>{{ $modul->jadwals_count }} Sesi</span>
+                                </a>
+                            </td>
+
+                            <!-- Status -->
+                            <td class="px-5 py-4 text-center whitespace-nowrap">
+                                @if($isAktif)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span>Aktif</span>
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 bg-slate-100">
+                                        Nonaktif
+                                    </span>
+                                @endif
+                            </td>
+
+                            <!-- Tindakan -->
+                            <td class="px-5 py-4 text-right whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1">
+                                    <a href="{{ route('admin.moduls.mata-kuliahs.index', $modul->id) }}" 
+                                       class="px-2.5 py-1 text-xs font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 rounded-lg transition inline-flex items-center gap-1"
+                                       title="Kelola Mata Kuliah">
+                                        <i class="bi bi-card-checklist"></i>
+                                        <span class="hidden md:inline">Mata Kuliah</span>
+                                    </a>
+
+                                    <!-- Tombol Duplikat Modul -->
+                                    <form action="{{ route('admin.moduls.duplicate', $modul->id) }}" method="POST"
+                                          data-confirm="Duplikat modul '{{ addslashes($modul->nama) }}' beserta seluruh materi mata kuliah di dalamnya?"
+                                          data-confirm-title="Duplikat Modul"
+                                          class="inline">
+                                        @csrf
+                                        <button type="submit" 
+                                                class="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition"
+                                                title="Duplikat Modul">
+                                            <i class="bi bi-copy"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Tombol Ubah Modul -->
+                                    <a href="{{ route('admin.moduls.edit', $modul->id) }}" 
+                                       class="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-slate-100 transition"
+                                       title="Ubah Modul">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+
+                                    <!-- Tombol Hapus Modul -->
+                                    <form action="{{ route('admin.moduls.destroy', $modul->id) }}" method="POST"
+                                          data-confirm="Apakah Anda yakin ingin menghapus modul '{{ addslashes($modul->nama) }}'?" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" 
+                                                class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition"
+                                                title="Hapus Modul">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="px-6 py-12 text-center text-slate-400">
+                                <div class="flex flex-col items-center justify-center">
+                                    <i class="bi bi-journal-x text-3xl mb-2 text-slate-300"></i>
+                                    <p class="font-semibold text-slate-700">Tidak ada modul yang sesuai dengan filter pilihan.</p>
+                                    @if($tipeFilter !== 'Semua')
+                                        <a href="{{ route('admin.moduls.index', ['tipe' => 'Semua']) }}" class="inline-block mt-2 text-xs text-brand-600 font-semibold hover:underline">
+                                            Tampilkan Semua Modul (Ganjil & Genap)
+                                        </a>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
     @if($moduls->hasPages())
