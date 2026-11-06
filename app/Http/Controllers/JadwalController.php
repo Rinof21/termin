@@ -42,8 +42,27 @@ class JadwalController extends Controller
         $tanggal = $request->query('tanggal');
         $activeSemester = Setting::getActiveSemester();
         $semesterFilter = $request->query('semester', $activeSemester);
+        $status = $request->query('status', 'active');
 
-        $jadwals = Jadwal::with('modul', 'dosen')
+        // Jumlah jadwal aktif dan yang berada di kotak sampah (soft deleted)
+        $activeCount = Jadwal::when($semesterFilter && $semesterFilter !== 'Semua', function ($query) use ($semesterFilter) {
+            return $query->whereHas('modul', function ($q) use ($semesterFilter) {
+                $q->where('tipe_semester', $semesterFilter);
+            });
+        })->count();
+
+        $trashCount = Jadwal::onlyTrashed()
+            ->when($semesterFilter && $semesterFilter !== 'Semua', function ($query) use ($semesterFilter) {
+                return $query->whereHas('modul', function ($q) use ($semesterFilter) {
+                    $q->where('tipe_semester', $semesterFilter);
+                });
+            })->count();
+
+        $baseQuery = $status === 'trash'
+            ? Jadwal::onlyTrashed()->with('modul', 'dosen')
+            : Jadwal::with('modul', 'dosen');
+
+        $jadwals = $baseQuery
             ->when($semesterFilter && $semesterFilter !== 'Semua', function ($query) use ($semesterFilter) {
                 return $query->whereHas('modul', function ($q) use ($semesterFilter) {
                     $q->where('tipe_semester', $semesterFilter);
@@ -66,7 +85,7 @@ class JadwalController extends Controller
             ->when($tanggal, function ($query, $tanggal) {
                 return $query->whereDate('tanggal', $tanggal);
             })
-            ->orderBy('tanggal', 'desc')
+            ->orderBy($status === 'trash' ? 'deleted_at' : 'tanggal', 'desc')
             ->orderBy('jam_mulai', 'asc')
             ->paginate(15)
             ->withQueryString();
@@ -79,7 +98,10 @@ class JadwalController extends Controller
 
         $dosens = Dosen::orderBy('nama')->get();
 
-        return view('admin.jadwals.index', compact('jadwals', 'moduls', 'dosens', 'search', 'modulId', 'dosenId', 'tanggal', 'activeSemester', 'semesterFilter'));
+        return view('admin.jadwals.index', compact(
+            'jadwals', 'moduls', 'dosens', 'search', 'modulId', 'dosenId', 'tanggal', 
+            'activeSemester', 'semesterFilter', 'status', 'activeCount', 'trashCount'
+        ));
     }
 
     /**
@@ -980,17 +1002,18 @@ class JadwalController extends Controller
     }
 
     /**
-     * Hapus jadwal.
+     * Hapus jadwal (Soft Delete).
      */
     public function destroy(Jadwal $jadwal)
     {
+        $nama = $jadwal->nama_kuliah;
         $jadwal->delete();
 
-        return back()->with('success', 'Jadwal kuliah berhasil dihapus.');
+        return back()->with('success', "Jadwal '{$nama}' berhasil dipindahkan ke kotak sampah (soft delete).");
     }
 
     /**
-     * Hapus banyak jadwal sekaligus (Bulk Delete).
+     * Hapus banyak jadwal sekaligus (Bulk Soft Delete).
      */
     public function bulkDelete(Request $request)
     {
@@ -1001,7 +1024,78 @@ class JadwalController extends Controller
 
         $count = Jadwal::whereIn('id', $validated['ids'])->delete();
 
-        return back()->with('success', "Sebanyak {$count} jadwal perkuliahan berhasil dihapus sekaligus.");
+        return back()->with('success', "Sebanyak {$count} jadwal perkuliahan berhasil dipindahkan ke kotak sampah (soft delete).");
+    }
+
+    /**
+     * Pulihkan jadwal dari kotak sampah (Restore).
+     */
+    public function restore($id)
+    {
+        $jadwal = Jadwal::onlyTrashed()->findOrFail($id);
+        $jadwal->restore();
+
+        return back()->with('success', "Jadwal '{$jadwal->nama_kuliah}' berhasil dipulihkan dari kotak sampah.");
+    }
+
+    /**
+     * Hapus permanen jadwal dari database (Force Delete).
+     */
+    public function forceDelete($id)
+    {
+        $jadwal = Jadwal::withTrashed()->findOrFail($id);
+        $nama = $jadwal->nama_kuliah;
+        $jadwal->forceDelete();
+
+        return back()->with('success', "Jadwal '{$nama}' berhasil dihapus secara permanen.");
+    }
+
+    /**
+     * Pulihkan banyak jadwal sekaligus dari kotak sampah (Bulk Restore).
+     */
+    public function bulkRestore(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+        ]);
+
+        $count = Jadwal::onlyTrashed()->whereIn('id', $validated['ids'])->restore();
+
+        return back()->with('success', "Sebanyak {$count} jadwal perkuliahan berhasil dipulihkan.");
+    }
+
+    /**
+     * Hapus permanen banyak jadwal sekaligus dari kotak sampah (Bulk Force Delete).
+     */
+    public function bulkForceDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+        ]);
+
+        $jadwals = Jadwal::withTrashed()->whereIn('id', $validated['ids'])->get();
+        $count = 0;
+        foreach ($jadwals as $j) {
+            $j->forceDelete();
+            $count++;
+        }
+
+        return back()->with('success', "Sebanyak {$count} jadwal perkuliahan berhasil dihapus secara permanen.");
+    }
+
+    /**
+     * Kosongkan seluruh isi kotak sampah.
+     */
+    public function emptyTrash()
+    {
+        $jadwals = Jadwal::onlyTrashed()->get();
+        $count = 0;
+        foreach ($jadwals as $j) {
+            $j->forceDelete();
+            $count++;
+        }
+
+        return back()->with('success', "Kotak sampah berhasil dikosongkan ({$count} data dihapus permanen).");
     }
 }
 

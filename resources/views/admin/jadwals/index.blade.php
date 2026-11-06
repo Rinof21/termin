@@ -42,9 +42,59 @@
         </div>
     </div>
 
+    <!-- Tab Status: Jadwal Aktif vs Kotak Sampah (Soft Delete) -->
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+        <div class="flex items-center gap-2">
+            <a href="{{ route('admin.jadwals.table', array_merge(request()->query(), ['status' => 'active'])) }}" 
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition {{ ($status ?? 'active') === 'active' ? 'bg-brand-600 text-white shadow-xs' : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200' }}">
+                <i class="bi bi-calendar-check text-sm"></i>
+                <span>Jadwal Aktif</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ ($status ?? 'active') === 'active' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">
+                    {{ $activeCount }}
+                </span>
+            </a>
+
+            <a href="{{ route('admin.jadwals.table', array_merge(request()->query(), ['status' => 'trash'])) }}" 
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition {{ ($status ?? 'active') === 'trash' ? 'bg-rose-600 text-white shadow-xs' : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200' }}">
+                <i class="bi bi-trash3 text-sm"></i>
+                <span>Kotak Sampah / Trash</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ ($status ?? 'active') === 'trash' ? 'bg-white/20 text-white' : 'bg-rose-50 text-rose-600 border border-rose-200' }}">
+                    {{ $trashCount }}
+                </span>
+            </a>
+        </div>
+
+        @if(($status ?? 'active') === 'trash' && $trashCount > 0)
+            <form action="{{ route('admin.jadwals.empty-trash') }}" method="POST"
+                  data-confirm="PERINGATAN: Apakah Anda yakin ingin mengosongkan seluruh isi kotak sampah? Seluruh data jadwal yang ada di kotak sampah akan dihapus secara PERMANEN dan tidak dapat dipulihkan!">
+                @csrf
+                <button type="submit" 
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 hover:text-white hover:bg-rose-600 border border-rose-300 transition shadow-2xs">
+                    <i class="bi bi-trash-fill"></i>
+                    <span>Kosongkan Kotak Sampah</span>
+                </button>
+            </form>
+        @endif
+    </div>
+
+    @if(($status ?? 'active') === 'trash')
+        <div class="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-900 flex items-start gap-3 text-xs">
+            <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 text-base">
+                <i class="bi bi-info-circle-fill"></i>
+            </div>
+            <div class="flex-1">
+                <span class="font-bold text-sm block">Mode Kotak Sampah (Soft Delete)</span>
+                <p class="text-amber-800 mt-0.5 leading-relaxed">
+                    Data di bawah ini adalah jadwal kuliah yang telah dihapus sementara (soft delete). Jadwal ini <strong>tidak ditampilkan</strong> pada kalender utama maupun portal publik. Anda dapat memulihkannya kembali atau menghapusnya secara permanen.
+                </p>
+            </div>
+        </div>
+    @endif
+
     <!-- Filter & Pencarian -->
     <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs">
         <form method="GET" action="{{ route('admin.jadwals.table') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+            <input type="hidden" name="status" value="{{ $status ?? 'active' }}">
             <input type="hidden" name="semester" value="{{ $semesterFilter ?? $activeSemester }}">
 
             <!-- Tombol Toggle Mode Pilih / Select -->
@@ -108,13 +158,29 @@
         </form>
     </div>
 
-    <!-- Form Aksi Hapus Massal (Bulk Delete Form) -->
-    <form id="bulkDeleteForm" action="{{ route('admin.jadwals.bulk-delete') }}" method="POST" @submit="confirmBulkDelete($event)">
-        @csrf
-        <template x-for="id in selectedIds" :key="id">
-            <input type="hidden" name="ids[]" :value="id">
-        </template>
-    </form>
+    <!-- Form Aksi Massal (Bulk Actions) -->
+    @if(($status ?? 'active') === 'trash')
+        <form id="bulkRestoreForm" action="{{ route('admin.jadwals.bulk-restore') }}" method="POST" @submit="confirmBulkRestore($event)">
+            @csrf
+            <template x-for="id in selectedIds" :key="'res-'+id">
+                <input type="hidden" name="ids[]" :value="id">
+            </template>
+        </form>
+
+        <form id="bulkForceDeleteForm" action="{{ route('admin.jadwals.bulk-force-delete') }}" method="POST" @submit="confirmBulkForceDelete($event)">
+            @csrf
+            <template x-for="id in selectedIds" :key="'fdel-'+id">
+                <input type="hidden" name="ids[]" :value="id">
+            </template>
+        </form>
+    @else
+        <form id="bulkDeleteForm" action="{{ route('admin.jadwals.bulk-delete') }}" method="POST" @submit="confirmBulkDelete($event)">
+            @csrf
+            <template x-for="id in selectedIds" :key="id">
+                <input type="hidden" name="ids[]" :value="id">
+            </template>
+        </form>
+    @endif
 
     <!-- Toolbar Melayang Aksi Massal (Muncul ketika ada item dicentang) -->
     <div x-cloak x-show="selectedIds.length > 0" 
@@ -124,9 +190,9 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-2"
-         class="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-brand-50 border border-brand-200 rounded-2xl shadow-sm">
-        <div class="flex items-center gap-3 text-xs text-brand-900 font-semibold">
-            <div class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+         class="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 {{ ($status ?? 'active') === 'trash' ? 'bg-rose-50 border border-rose-200' : 'bg-brand-50 border border-brand-200' }} rounded-2xl shadow-sm">
+        <div class="flex items-center gap-3 text-xs {{ ($status ?? 'active') === 'trash' ? 'text-rose-900' : 'text-brand-900' }} font-semibold">
+            <div class="w-8 h-8 rounded-xl {{ ($status ?? 'active') === 'trash' ? 'bg-rose-600' : 'bg-brand-600' }} text-white flex items-center justify-center font-bold text-sm shadow-xs">
                 <span x-text="selectedIds.length"></span>
             </div>
             <span>Jadwal kuliah terpilih untuk tindakan massal</span>
@@ -137,11 +203,24 @@
                     class="px-3.5 py-2 text-xs text-slate-600 hover:text-slate-800 font-semibold rounded-xl hover:bg-white bg-slate-100/70 border border-slate-200 transition">
                 Batalkan Pilihan
             </button>
-            <button type="submit" form="bulkDeleteForm"
-                    class="px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-2">
-                <i class="bi bi-trash-fill text-sm"></i>
-                <span>Hapus (<span x-text="selectedIds.length"></span>) Jadwal Terpilih</span>
-            </button>
+            @if(($status ?? 'active') === 'trash')
+                <button type="submit" form="bulkRestoreForm"
+                        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-2">
+                    <i class="bi bi-arrow-counterclockwise text-sm"></i>
+                    <span>Pulihkan (<span x-text="selectedIds.length"></span>) Terpilih</span>
+                </button>
+                <button type="submit" form="bulkForceDeleteForm"
+                        class="px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-2">
+                    <i class="bi bi-trash-fill text-sm"></i>
+                    <span>Hapus Permanen (<span x-text="selectedIds.length"></span>)</span>
+                </button>
+            @else
+                <button type="submit" form="bulkDeleteForm"
+                        class="px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-2">
+                    <i class="bi bi-trash-fill text-sm"></i>
+                    <span>Hapus (<span x-text="selectedIds.length"></span>) Jadwal Terpilih</span>
+                </button>
+            @endif
         </div>
     </div>
 
@@ -191,6 +270,12 @@
                                 <div class="text-[11px] font-mono text-brand-600 font-bold mt-0.5">
                                     {{ substr($jadwal->jam_mulai, 0, 5) }} - {{ substr($jadwal->jam_selesai, 0, 5) }} WIB
                                 </div>
+                                @if(($status ?? 'active') === 'trash' && $jadwal->deleted_at)
+                                    <span class="inline-flex items-center gap-1 mt-1 text-[10px] text-rose-600 font-medium bg-rose-50 border border-rose-200/80 rounded px-1.5 py-0.2">
+                                        <i class="bi bi-trash3"></i>
+                                        <span>Dihapus {{ $jadwal->deleted_at->diffForHumans() }}</span>
+                                    </span>
+                                @endif
                             </td>
 
                             <!-- Modul -->
@@ -264,32 +349,59 @@
                             <!-- Tindakan -->
                             <td class="px-5 py-4 text-right whitespace-nowrap">
                                 <div class="inline-flex items-center gap-1.5">
-                                    <a href="{{ route('admin.jadwals.edit', $jadwal->id) }}" 
-                                       title="Ubah Jadwal"
-                                       class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition">
-                                        <i class="bi bi-pencil-square text-base"></i>
-                                    </a>
+                                    @if(($status ?? 'active') === 'trash')
+                                        <!-- Tombol Pulihkan (Restore) -->
+                                        <form action="{{ route('admin.jadwals.restore', $jadwal->id) }}" method="POST"
+                                              data-confirm="Pulihkan jadwal '{{ addslashes($jadwal->nama_kuliah) }}' kembali ke jadwal aktif?" class="inline">
+                                            @csrf
+                                            <button type="submit" title="Pulihkan Jadwal (Restore)"
+                                                    class="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition">
+                                                <i class="bi bi-arrow-counterclockwise text-base"></i>
+                                            </button>
+                                        </form>
 
-                                    <form action="{{ route('admin.jadwals.destroy', $jadwal->id) }}" method="POST"
-                                          data-confirm="Apakah Anda yakin ingin menghapus jadwal '{{ addslashes($jadwal->nama_kuliah) }}'?" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" title="Hapus Jadwal"
-                                                class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
-                                            <i class="bi bi-trash text-base"></i>
-                                        </button>
-                                    </form>
+                                        <!-- Tombol Hapus Permanen (Force Delete) -->
+                                        <form action="{{ route('admin.jadwals.force-delete', $jadwal->id) }}" method="POST"
+                                              data-confirm="PERINGATAN: Apakah Anda yakin ingin menghapus jadwal '{{ addslashes($jadwal->nama_kuliah) }}' secara PERMANEN? Tindakan ini tidak dapat dibatalkan!" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" title="Hapus Permanen"
+                                                    class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                                                <i class="bi bi-trash-fill text-base"></i>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('admin.jadwals.edit', $jadwal->id) }}" 
+                                           title="Ubah Jadwal"
+                                           class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition">
+                                            <i class="bi bi-pencil-square text-base"></i>
+                                        </a>
+
+                                        <form action="{{ route('admin.jadwals.destroy', $jadwal->id) }}" method="POST"
+                                              data-confirm="Pindahkan jadwal '{{ addslashes($jadwal->nama_kuliah) }}' ke kotak sampah (soft delete)?" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" title="Pindahkan ke Kotak Sampah"
+                                                    class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                                                <i class="bi bi-trash text-base"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
                             <td :colspan="isSelectMode ? 8 : 7" class="px-6 py-12 text-center">
-                                <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-xl">
-                                    <i class="bi bi-calendar-x"></i>
+                                <div class="w-12 h-12 rounded-2xl {{ ($status ?? 'active') === 'trash' ? 'bg-rose-50 text-rose-500' : 'bg-slate-100 text-slate-400' }} flex items-center justify-center mx-auto mb-3 text-xl">
+                                    <i class="bi {{ ($status ?? 'active') === 'trash' ? 'bi-trash3' : 'bi-calendar-x' }}"></i>
                                 </div>
-                                <p class="text-sm font-semibold text-slate-700">Tidak ada jadwal kuliah ditemukan</p>
-                                <p class="text-xs text-slate-400 mt-1">Silakan sesuaikan filter pencarian atau tambahkan jadwal kuliah baru.</p>
+                                <p class="text-sm font-semibold text-slate-700">
+                                    {{ ($status ?? 'active') === 'trash' ? 'Kotak sampah kosong' : 'Tidak ada jadwal kuliah ditemukan' }}
+                                </p>
+                                <p class="text-xs text-slate-400 mt-1">
+                                    {{ ($status ?? 'active') === 'trash' ? 'Tidak ada data jadwal yang sedang berada di kotak sampah.' : 'Silakan sesuaikan filter pencarian atau tambahkan jadwal kuliah baru.' }}
+                                </p>
                             </td>
                         </tr>
                     @endforelse
@@ -330,13 +442,45 @@
             confirmBulkDelete(event) {
                 event.preventDefault();
                 if (this.selectedIds.length === 0) {
-                    swalAlert('Pilih Jadwal', 'Silakan pilih setidaknya satu jadwal kuliah untuk dihapus.', 'info');
+                    swalAlert('Pilih Jadwal', 'Silakan pilih setidaknya satu jadwal kuliah untuk dipindahkan ke kotak sampah.', 'info');
                     return false;
                 }
                 const form = event.target;
                 swalConfirm(
-                    'Konfirmasi Hapus Massal',
-                    `Apakah Anda yakin ingin menghapus ${this.selectedIds.length} jadwal kuliah yang dipilih? Tindakan ini tidak dapat dibatalkan.`,
+                    'Konfirmasi Hapus Massal (Soft Delete)',
+                    `Apakah Anda yakin ingin memindahkan ${this.selectedIds.length} jadwal kuliah yang dipilih ke kotak sampah? Data dapat dipulihkan sewaktu-waktu.`,
+                    () => {
+                        form.submit();
+                    }
+                );
+                return false;
+            },
+            confirmBulkRestore(event) {
+                event.preventDefault();
+                if (this.selectedIds.length === 0) {
+                    swalAlert('Pilih Jadwal', 'Silakan pilih setidaknya satu jadwal kuliah untuk dipulihkan.', 'info');
+                    return false;
+                }
+                const form = event.target;
+                swalConfirm(
+                    'Konfirmasi Pemulihan Massal',
+                    `Apakah Anda yakin ingin memulihkan ${this.selectedIds.length} jadwal kuliah yang dipilih kembali ke jadwal aktif?`,
+                    () => {
+                        form.submit();
+                    }
+                );
+                return false;
+            },
+            confirmBulkForceDelete(event) {
+                event.preventDefault();
+                if (this.selectedIds.length === 0) {
+                    swalAlert('Pilih Jadwal', 'Silakan pilih setidaknya satu jadwal kuliah untuk dihapus secara permanen.', 'info');
+                    return false;
+                }
+                const form = event.target;
+                swalConfirm(
+                    'Konfirmasi Hapus Permanen Massal',
+                    `PERINGATAN: Apakah Anda yakin ingin menghapus secara PERMANEN ${this.selectedIds.length} jadwal kuliah yang dipilih? Tindakan ini TIDAK DAPAT DIBATALKAN!`,
                     () => {
                         form.submit();
                     }

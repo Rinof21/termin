@@ -47,6 +47,11 @@ Route::middleware('auth')->group(function () {
         Route::get('jadwals/matrix', [JadwalController::class, 'matrix'])->name('jadwals.matrix');
         Route::get('jadwals/events', [JadwalController::class, 'events'])->name('jadwals.events');
         Route::post('jadwals/bulk-delete', [JadwalController::class, 'bulkDelete'])->name('jadwals.bulk-delete');
+        Route::post('jadwals/bulk-restore', [JadwalController::class, 'bulkRestore'])->name('jadwals.bulk-restore');
+        Route::post('jadwals/bulk-force-delete', [JadwalController::class, 'bulkForceDelete'])->name('jadwals.bulk-force-delete');
+        Route::post('jadwals/empty-trash', [JadwalController::class, 'emptyTrash'])->name('jadwals.empty-trash');
+        Route::post('jadwals/{id}/restore', [JadwalController::class, 'restore'])->name('jadwals.restore');
+        Route::delete('jadwals/{id}/force-delete', [JadwalController::class, 'forceDelete'])->name('jadwals.force-delete');
         Route::resource('jadwals', JadwalController::class)->except(['index']);
 
         // Pengaturan Sistem (Semester Aktif)

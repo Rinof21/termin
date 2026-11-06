@@ -159,111 +159,112 @@
         </div>
     </div>
 
-    <!-- Navigasi Cepat 6 Minggu Termin Berjalan -->
-    @if($activeTermin)
-        <div class="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold text-lg border border-brand-100 shrink-0">
-                    <i class="bi bi-calendar3"></i>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm font-bold text-slate-900">{{ $activeTermin->nama }}</span>
-                        <span class="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full border border-emerald-200">AKTIF</span>
-                    </div>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ $activeTermin->rentang_tanggal }} &bull; {{ $activeTermin->jumlah_minggu }} Minggu Berjalan</p>
-                </div>
-            </div>
-
-            <!-- Tombol Navigasi Lompat per Minggu (Minggu 1 s/d Minggu 6) -->
-            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
-                <button type="button" @click="goToMonthView()"
-                        :class="activeWeekTab === 'month' ? 'bg-brand-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'"
-                        class="px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5">
-                    <i class="bi bi-calendar-month"></i>
-                    <span>Bulan Penuh</span>
-                </button>
-
-                @foreach($activeTermin->daftar_minggu as $m)
-                    <button type="button" @click="goToWeek('{{ $m['tanggal_mulai'] }}', {{ $m['nomor'] }})"
-                            :class="activeWeekTab === {{ $m['nomor'] }} ? 'bg-brand-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'"
-                            class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex flex-col items-center leading-tight">
-                        <span>{{ $m['label'] }}</span>
-                        <span class="text-[10px] font-normal opacity-80">{{ \Carbon\Carbon::parse($m['tanggal_mulai'])->translatedFormat('d M') }} - {{ \Carbon\Carbon::parse($m['tanggal_selesai'])->translatedFormat('d M') }}</span>
-                    </button>
-                @endforeach
-            </div>
-        </div>
-    @endif
-
-    <!-- Filter Bar Interaktif -->
-    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs">
-        <div class="flex flex-col lg:flex-row items-center justify-between gap-4">
-            <!-- Filter Dropdowns -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto flex-1">
-                <!-- Filter Modul -->
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Pilih Modul</label>
-                    <select x-model="filterModul" @change="refetchCalendar()" 
-                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                        <option value="">Semua Modul</option>
-                        @foreach($moduls as $m)
-                            <option value="{{ $m->id }}">{{ $m->kode }} - {{ $m->nama }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Filter Dosen -->
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Dosen Pengampu</label>
-                    <select x-model="filterDosen" @change="refetchCalendar()" 
-                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                        <option value="">Semua Dosen</option>
-                        @foreach($dosens as $d)
-                            <option value="{{ $d->id }}">[{{ $d->kode }}] {{ $d->nama }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Filter Kelompok -->
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Kelompok Mahasiswa</label>
-                    <select x-model="filterKelompok" @change="refetchCalendar()" 
-                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                        <option value="">Semua Kelompok</option>
-                        @foreach($kelompoks as $kel)
-                            <option value="{{ $kel }}">{{ $kel }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-
-            <!-- Legenda Warna Modul -->
-            <div class="w-full lg:w-auto pt-3 lg:pt-0 lg:border-l lg:border-slate-100 lg:pl-5">
-                <span class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Legenda Modul:</span>
-                <div class="flex flex-wrap gap-2">
-                    @foreach($moduls as $modul)
-                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-medium bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100"
-                              @click="filterModul = '{{ $modul->id }}'; refetchCalendar()">
-                            <span class="w-2.5 h-2.5 rounded-full" style="background-color: {{ $modul->warna }}"></span>
-                            <span class="text-slate-700 font-semibold">{{ $modul->kode }}</span>
-                        </span>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Layout 2 Kolom: Kolom 1 Kalender + Kolom 2 Panel Detail -->
+    <!-- Layout 2 Kolom: Kolom 1 (Navigasi & Kalender) + Kolom 2 (Panel Kanan Filter & Detail) -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        <!-- KOLOM 1: Kalender (7 Kolom pada Desktop) -->
-        <div class="lg:col-span-7 xl:col-span-8 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
-            <div id="calendar" class="min-h-[680px]"></div>
+        <!-- KOLOM 1: Navigasi Minggu & Kalender (7 Kolom pada Desktop) -->
+        <div class="lg:col-span-7 xl:col-span-8 space-y-5 min-w-0">
+            <!-- Navigasi Cepat 6 Minggu Termin Berjalan -->
+            @if($activeTermin)
+                <div class="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-xs flex items-center gap-2 overflow-x-auto">
+                    <button type="button" @click="goToMonthView()"
+                            :class="activeWeekTab === 'month' ? 'bg-brand-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'"
+                            class="px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5 shrink-0">
+                        <i class="bi bi-calendar-month text-sm"></i>
+                        <span>Bulan Penuh</span>
+                    </button>
+
+                    @foreach($activeTermin->daftar_minggu as $m)
+                        <button type="button" @click="goToWeek('{{ $m['tanggal_mulai'] }}', {{ $m['nomor'] }})"
+                                :class="activeWeekTab === {{ $m['nomor'] }} ? 'bg-brand-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'"
+                                class="flex-1 min-w-[95px] px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex flex-col items-center leading-tight">
+                            <span>{{ $m['label'] }}</span>
+                            <span class="text-[10px] font-normal opacity-80">{{ \Carbon\Carbon::parse($m['tanggal_mulai'])->translatedFormat('d M') }} - {{ \Carbon\Carbon::parse($m['tanggal_selesai'])->translatedFormat('d M') }}</span>
+                        </button>
+                    @endforeach
+                </div>
+            @endif
+
+            <!-- Kontainer Kalender FullCalendar -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+                <div id="calendar" class="min-h-[680px]"></div>
+            </div>
         </div>
 
-        <!-- KOLOM 2: Panel Detail Modul & Jadwal Kuliah (5 Kolom pada Desktop) -->
+        <!-- KOLOM 2: Panel Kanan (Filter & Detail Jadwal Kuliah) -->
         <div id="panel-detail-kolom" class="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-20 space-y-5">
+            
+            <!-- Filter Bar Interaktif di Panel Kanan -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-3.5">
+                <div class="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                    <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="bi bi-funnel text-brand-600 text-sm"></i>
+                        <span>Filter Jadwal</span>
+                    </span>
+                    <button type="button" 
+                            x-show="filterModul || filterDosen || filterKelompok" 
+                            @click="filterModul = ''; filterDosen = ''; filterKelompok = ''; refetchCalendar()"
+                            class="text-[11px] font-semibold text-brand-600 hover:text-brand-800 transition">
+                        Reset Filter
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <!-- Filter Modul -->
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pilih Modul</label>
+                        <select x-model="filterModul" @change="refetchCalendar()" 
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                            <option value="">Semua Modul</option>
+                            @foreach($moduls as $m)
+                                <option value="{{ $m->id }}">{{ $m->kode }} - {{ $m->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Filter Dosen & Kelompok (2 Kolom) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <!-- Filter Dosen -->
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Dosen Pengampu</label>
+                            <select x-model="filterDosen" @change="refetchCalendar()" 
+                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                                <option value="">Semua Dosen</option>
+                                @foreach($dosens as $d)
+                                    <option value="{{ $d->id }}">[{{ $d->kode }}] {{ $d->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Filter Kelompok -->
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kelompok</label>
+                            <select x-model="filterKelompok" @change="refetchCalendar()" 
+                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                                <option value="">Semua Kelompok</option>
+                                @foreach($kelompoks as $kel)
+                                    <option value="{{ $kel }}">{{ $kel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Legenda Warna Modul -->
+                    <div class="pt-2.5 border-t border-slate-100">
+                        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Legenda Modul:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            @foreach($moduls as $modul)
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-medium bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100 transition"
+                                      :class="filterModul === '{{ $modul->id }}' ? 'ring-2 ring-brand-500 bg-brand-50 border-brand-300' : ''"
+                                      @click="filterModul = (filterModul === '{{ $modul->id }}' ? '' : '{{ $modul->id }}'); refetchCalendar()">
+                                    <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {{ $modul->warna }}"></span>
+                                    <span class="text-slate-700 font-semibold">{{ $modul->kode }}</span>
+                                </span>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- Keadaan 1: Ada Jadwal yang Diklik -->
             <div x-cloak x-show="hasSelectedEvent" 
@@ -385,24 +386,13 @@
                 </div>
             </div>
 
-            <!-- Keadaan 2: Belum Ada Jadwal yang Diklik (Placeholder Panduan) -->
+            <!-- Keadaan 2: Belum Ada Jadwal yang Diklik -->
             <div x-show="!hasSelectedEvent" 
-                 class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-5 text-center">
-                
-                <div class="w-14 h-14 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mx-auto text-2xl shadow-xs border border-brand-100">
-                    <i class="bi bi-cursor-fill animate-bounce"></i>
-                </div>
-                
-                <div>
-                    <h3 class="font-bold text-slate-800 text-base">Pilih Jadwal di Kalender</h3>
-                    <p class="text-xs text-slate-400 mt-1 leading-relaxed max-w-xs mx-auto">
-                        Klik salah satu modul atau mata kuliah pada kalender di sebelah kiri untuk melihat rincian jam, dosen, ruangan, dan tindakan.
-                    </p>
-                </div>
+                 class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 space-y-5">
 
-                <!-- Daftar Cepat Modul Termin 4 -->
-                <div class="pt-4 border-t border-slate-100 text-left space-y-2.5">
-                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-2">Modul Termin 4:</span>
+                <!-- Daftar Cepat Modul Termin -->
+                <div class="space-y-2.5">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-2">Modul Termin {{ $activeTermin->nomor_termin ?? 4 }}:</span>
                     @foreach($moduls as $m)
                         <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50/60 flex items-center justify-between text-xs hover:bg-slate-50 cursor-pointer transition"
                              @click="filterModul = '{{ $m->id }}'; refetchCalendar()">

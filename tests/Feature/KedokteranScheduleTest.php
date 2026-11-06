@@ -186,8 +186,18 @@ class KedokteranScheduleTest extends TestCase
 
         $jadwal = Jadwal::where('nama_kuliah', 'Kuliah Anatomi Jantung')->first();
 
-        // Destroy
+        // Destroy (Soft Delete)
         $response = $this->actingAs($admin)->delete("/admin/jadwals/{$jadwal->id}");
+        $response->assertRedirect();
+        $this->assertSoftDeleted('jadwals', ['id' => $jadwal->id]);
+
+        // Restore
+        $response = $this->actingAs($admin)->post("/admin/jadwals/{$jadwal->id}/restore");
+        $response->assertRedirect();
+        $this->assertNotSoftDeleted('jadwals', ['id' => $jadwal->id]);
+
+        // Force Delete
+        $response = $this->actingAs($admin)->delete("/admin/jadwals/{$jadwal->id}/force-delete");
         $response->assertRedirect();
         $this->assertDatabaseMissing('jadwals', ['id' => $jadwal->id]);
     }
@@ -203,8 +213,46 @@ class KedokteranScheduleTest extends TestCase
 
         $response->assertRedirect();
         foreach ($jadwalIds as $id) {
-            $this->assertDatabaseMissing('jadwals', ['id' => $id]);
+            $this->assertSoftDeleted('jadwals', ['id' => $id]);
         }
+
+        // Bulk Restore
+        $response = $this->actingAs($admin)->post('/admin/jadwals/bulk-restore', [
+            'ids' => $jadwalIds,
+        ]);
+        $response->assertRedirect();
+        foreach ($jadwalIds as $id) {
+            $this->assertNotSoftDeleted('jadwals', ['id' => $id]);
+        }
+    }
+
+    public function test_jadwal_trash_management(): void
+    {
+        $admin = User::where('email', 'admin@admin.com')->first();
+        $activeSemester = Setting::getActiveSemester();
+        $modul = Modul::where('tipe_semester', $activeSemester)->first() ?: Modul::first();
+        $dummy = Jadwal::create([
+            'modul_id' => $modul->id,
+            'nama_kuliah' => 'Dummy Soft Delete Test',
+            'tipe_kegiatan' => 'Kuliah',
+            'tanggal' => '2026-11-29',
+            'jam_mulai' => '13:00',
+            'jam_selesai' => '14:00',
+        ]);
+
+        // Soft delete
+        $dummy->delete();
+        $this->assertSoftDeleted('jadwals', ['id' => $dummy->id]);
+
+        // Trash view accessible
+        $res = $this->actingAs($admin)->get('/admin/jadwals/table?status=trash&semester=' . ($modul->tipe_semester ?? $activeSemester));
+        $res->assertStatus(200);
+        $res->assertSee('Dummy Soft Delete Test');
+
+        // Empty trash
+        $res = $this->actingAs($admin)->post('/admin/jadwals/empty-trash');
+        $res->assertRedirect();
+        $this->assertDatabaseMissing('jadwals', ['id' => $dummy->id]);
     }
 
     public function test_dosen_bulk_delete(): void

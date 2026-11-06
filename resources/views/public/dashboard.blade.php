@@ -658,51 +658,11 @@
                 </div>
 
                 <!-- SUB-VIEW 2: KALENDER INTERAKTIF -->
-                <div x-show="activeView === 'calendar'" x-cloak class="space-y-5">
-                    
-                    <!-- Filter Bar Kalender Interaktif -->
-                    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs no-print">
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pilih Modul:</label>
-                                <select x-model="calendarFilterModul" @change="refetchCalendarEvents()"
-                                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                                    <option value="">Semua Modul</option>
-                                    @foreach($moduls as $m)
-                                        <option value="{{ $m->id }}">[{{ $m->kode }}] {{ $m->nama }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pilih Dosen:</label>
-                                <select x-model="calendarFilterDosen" @change="refetchCalendarEvents()"
-                                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                                    <option value="">Semua Dosen</option>
-                                    @foreach($dosens as $d)
-                                        <option value="{{ $d->id }}">[{{ $d->kode }}] {{ $d->nama }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pilih Kelompok:</label>
-                                <select x-model="calendarFilterKelompok" @change="refetchCalendarEvents()"
-                                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                                    <option value="">Semua Kelompok</option>
-                                    @foreach($kelompoks as $k)
-                                        <option value="{{ $k }}">{{ $k }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
+                <div x-show="activeView === 'calendar'" x-cloak>
                     <!-- Kalender Card -->
                     <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
                         <div id="publicCalendar" class="min-h-[650px]"></div>
                     </div>
-
                 </div>
 
             </div>
@@ -711,6 +671,56 @@
             <!-- KOLOM KANAN: PANEL INFORMASI & RINCIAN DETAIL KEGIATAN          -->
             <!-- ============================================================== -->
             <div id="panel-informasi-detail" class="lg:col-span-4 xl:col-span-4 2xl:col-span-3 lg:sticky lg:top-20 space-y-5 no-print">
+                
+                <!-- Filter Bar Kalender (Dipindahkan ke Panel Kanan) -->
+                <div x-show="activeView === 'calendar'" class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-3.5">
+                    <div class="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="bi bi-funnel text-brand-600"></i>
+                            <span>Filter Jadwal</span>
+                        </span>
+                        <button type="button" 
+                                @click="calendarFilterModul = ''; calendarFilterDosen = ''; calendarFilterKelompok = ''; refetchCalendarEvents()" 
+                                class="text-[11px] text-brand-600 hover:text-brand-700 font-semibold transition">
+                            Reset
+                        </button>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pilih Modul</label>
+                            <select x-model="calendarFilterModul" @change="refetchCalendarEvents()"
+                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                                <option value="">Semua Modul</option>
+                                @foreach($moduls as $m)
+                                    <option value="{{ $m->id }}">[{{ $m->kode }}] {{ $m->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pilih Dosen</label>
+                            <select x-model="calendarFilterDosen" @change="refetchCalendarEvents()"
+                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                                <option value="">Semua Dosen</option>
+                                @foreach($dosens as $d)
+                                    <option value="{{ $d->id }}">[{{ $d->kode }}] {{ $d->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pilih Kelompok</label>
+                            <select x-model="calendarFilterKelompok" @change="refetchCalendarEvents()"
+                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                                <option value="">Semua Kelompok</option>
+                                @foreach($kelompoks as $k)
+                                    <option value="{{ $k }}">{{ $k }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- KEADAAN 1: SAAT ADA JADWAL YANG DIKLIK -->
                 <div x-cloak x-show="hasSelectedEvent" 
@@ -816,19 +826,6 @@
                 <!-- KEADAAN 2: BELUM ADA JADWAL DIKLIK (INFORMASI AKADEMIK & LEGENDA) -->
                 <div x-show="!hasSelectedEvent" class="space-y-5">
                     
-                    <!-- Kartu Panduan Interaktif -->
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 space-y-3 text-center">
-                        <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mx-auto text-xl shadow-2xs border border-brand-100">
-                            <i class="bi bi-cursor-fill animate-bounce"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-slate-800 text-sm">Pilih Kegiatan Perkuliahan</h4>
-                            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                                Klik salah satu kegiatan di matriks atau kalender di sebelah kiri untuk melihat rincian jam, dosen, ruangan, dan silabus.
-                            </p>
-                        </div>
-                    </div>
-
                     <!-- Legenda & Daftar Modul Pembelajaran -->
                     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 space-y-3">
                         <div class="flex items-center justify-between">
