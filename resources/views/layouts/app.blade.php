@@ -115,20 +115,20 @@
                         <a href="{{ route('dashboard') }}" 
                            class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('dashboard') || request()->routeIs('admin.jadwals.*') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             <i class="bi bi-calendar3 text-lg {{ request()->routeIs('dashboard') || request()->routeIs('admin.jadwals.*') ? 'text-brand-600' : 'text-slate-400' }}"></i>
-                            <span class="flex-1">Kalender Termin</span>
+                            <span class="flex-1">Dashboard</span>
                         </a>
                     </nav>
                 </div>
 
                 <!-- Bagian 2: Jadwal Termin & Perkuliahan S1 Kedokteran -->
                 <div>
-                    <p class="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Jadwal & Akademik</p>
+                    <p class="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Pengaturan</p>
                     <nav class="space-y-1">
                         <!-- Jadwal Termin Akademik -->
                         <a href="{{ route('admin.termins.index') }}" 
                            class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.termins.*') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             <i class="bi bi-calendar-range text-lg {{ request()->routeIs('admin.termins.*') ? 'text-brand-600' : 'text-slate-400' }}"></i>
-                            <span class="flex-1">Jadwal Termin</span>
+                            <span class="flex-1">Data Termin</span>
                         </a>
 
                         <!-- Master Tahun Semester (2026.1, 2026.2, dll) -->
