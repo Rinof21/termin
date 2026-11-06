@@ -10,7 +10,7 @@ use App\Models\Semester;
 use App\Models\Setting;
 use App\Models\Termin;
 use App\Models\User;
-use Database\Seeders\RolePermissionSeeder;
+use Database\Seeders\DatabaseSeeder;
 use Tests\TestCase;
 
 class KedokteranScheduleTest extends TestCase
@@ -19,7 +19,7 @@ class KedokteranScheduleTest extends TestCase
     {
         parent::setUp();
         if (User::where('email', 'admin@admin.com')->doesntExist() || Jadwal::count() == 0 || Semester::where('kode', '2026.2')->doesntExist()) {
-            $this->seed(RolePermissionSeeder::class);
+            $this->seed(DatabaseSeeder::class);
         }
     }
 

@@ -249,33 +249,39 @@
                     </a>
                 </div>
 
-                <!-- Center: Informasi Tahun Ajaran, Termin & Rentang Tanggal -->
-                <div class="hidden md:flex items-center gap-2.5 px-3.5 py-1.5 bg-slate-100/90 border border-slate-200/90 rounded-xl shadow-2xs">
+                <!-- Center: Informasi Tahun Ajaran, Termin & Rentang Tanggal (Dinamis menyesuaikan rentang waktu kalender) -->
+                <div class="hidden md:flex items-center gap-2.5 px-3.5 py-1.5 bg-slate-100/90 border border-slate-200/90 rounded-xl shadow-2xs transition-all duration-150">
                     <div class="flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full {{ ($currentTermin && $currentTermin->is_aktif) ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }}"></span>
-                        <span class="font-bold text-xs text-slate-900 tracking-tight">
+                        <span class="w-2 h-2 rounded-full"
+                              :class="displayedTermin.is_aktif ? 'bg-emerald-500 animate-pulse' : (displayedTermin.is_in_termin ? 'bg-indigo-500' : 'bg-slate-400')"></span>
+                        <span class="font-bold text-xs text-slate-900 tracking-tight"
+                              x-text="displayedTermin.nama">
                             {{ $currentTermin ? $currentTermin->nama : 'Termin Perkuliahan' }}
                         </span>
-                        @if($currentTermin && $currentTermin->is_aktif)
-                            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        <template x-if="displayedTermin.is_aktif">
+                            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
                                 AKTIF
                             </span>
-                        @endif
+                        </template>
                     </div>
 
                     <span class="text-slate-300">|</span>
 
-                    <span class="text-xs text-slate-600 font-semibold">
+                    <span class="text-xs text-slate-600 font-semibold"
+                          x-text="'T.A. ' + (displayedTermin.tahun_ajaran || '2026/2027')">
                         T.A. {{ $currentTermin->tahun_ajaran ?? '2026/2027' }}
                     </span>
 
-                    @if($currentTermin && $currentTermin->rentang_tanggal && $currentTermin->rentang_tanggal !== '-')
-                        <span class="text-slate-300 hidden lg:inline">|</span>
-                        <span class="hidden lg:inline-flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                            <i class="bi bi-calendar-range text-slate-400 text-xs"></i>
-                            <span>{{ $currentTermin->rentang_tanggal }}</span>
-                        </span>
-                    @endif
+                    <template x-if="displayedTermin.rentang_tanggal && displayedTermin.rentang_tanggal !== '-'">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-slate-300 hidden lg:inline">|</span>
+                            <span class="hidden lg:inline-flex items-center gap-1 text-[11px] font-medium"
+                                  :class="displayedTermin.is_in_termin ? 'text-slate-500' : 'text-amber-600 font-semibold'">
+                                <i class="bi text-xs" :class="displayedTermin.is_in_termin ? 'bi-calendar-range text-slate-400' : 'bi-exclamation-circle text-amber-500'"></i>
+                                <span x-text="displayedTermin.rentang_tanggal">{{ $currentTermin->rentang_tanggal ?? '' }}</span>
+                            </span>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Right Action Buttons: Filter Semester, Cetak & Login -->
@@ -984,6 +990,44 @@
                 activeEventDosen: {},
                 activeEventDosenPendamping: [],
 
+                // State Termin yang sedang aktif/dilihat pada header navigasi
+                displayedTermin: {
+                    nama: '{{ $currentTermin ? $currentTermin->nama : 'Termin Perkuliahan' }}',
+                    is_aktif: {{ ($currentTermin && $currentTermin->is_aktif) ? 'true' : 'false' }},
+                    tahun_ajaran: '{{ $currentTermin->tahun_ajaran ?? '2026/2027' }}',
+                    rentang_tanggal: '{{ $currentTermin ? $currentTermin->rentang_tanggal : '-' }}',
+                    is_in_termin: {{ $currentTermin ? 'true' : 'false' }},
+                },
+
+                // Seluruh daftar termin di database untuk sinkronisasi rentang waktu otomatis
+                allTermins: {!! json_encode($allTerminsList->map(function($t) {
+                    return [
+                        'id' => $t->id,
+                        'nomor' => $t->nomor,
+                        'nama' => $t->nama,
+                        'tipe_semester' => $t->tipe_semester,
+                        'tahun_ajaran' => $t->tahun_ajaran,
+                        'tanggal_mulai' => $t->tanggal_mulai ? $t->tanggal_mulai->format('Y-m-d') : null,
+                        'tanggal_selesai' => $t->tanggal_selesai ? $t->tanggal_selesai->format('Y-m-d') : null,
+                        'rentang_tanggal' => $t->rentang_tanggal,
+                        'is_aktif' => (bool) $t->is_aktif,
+                    ];
+                })->values()) !!},
+
+                // Seluruh daftar master semester terdaftar untuk deteksi Tahun Ajaran
+                allSemesters: {!! json_encode($allSemestersList->map(function($s) {
+                    return [
+                        'id' => $s->id,
+                        'kode' => $s->kode,
+                        'nama' => $s->nama,
+                        'tipe' => $s->tipe,
+                        'tahun_ajaran' => $s->tahun_ajaran,
+                        'tanggal_mulai' => $s->tanggal_mulai ? $s->tanggal_mulai->format('Y-m-d') : null,
+                        'tanggal_selesai' => $s->tanggal_selesai ? $s->tanggal_selesai->format('Y-m-d') : null,
+                        'is_aktif' => (bool) $s->is_aktif,
+                    ];
+                })->values()) !!},
+
                 calendarInstance: null,
                 calendarFilterModul: '',
                 calendarFilterDosen: '',
@@ -1100,6 +1144,113 @@
                     }
                 },
 
+                formatDateYMD(d) {
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                },
+
+                getTahunAjaranForDate(date) {
+                    const dateStr = this.formatDateYMD(date);
+
+                    // 1. Cek dari daftar termin yang mencakup tanggal ini
+                    if (this.allTermins && this.allTermins.length > 0) {
+                        for (const t of this.allTermins) {
+                            if (t.tanggal_mulai && t.tanggal_selesai && dateStr >= t.tanggal_mulai && dateStr <= t.tanggal_selesai) {
+                                if (t.tahun_ajaran) return t.tahun_ajaran;
+                            }
+                        }
+                    }
+
+                    // 2. Cek dari daftar master semester terdaftar
+                    if (this.allSemesters && this.allSemesters.length > 0) {
+                        for (const s of this.allSemesters) {
+                            if (s.tanggal_mulai && s.tanggal_selesai && dateStr >= s.tanggal_mulai && dateStr <= s.tanggal_selesai) {
+                                if (s.tahun_ajaran) return s.tahun_ajaran;
+                            }
+                        }
+                    }
+
+                    // 3. Konsep Kalender Akademik (Tahun Ajaran dinamis sesuai tanggal):
+                    // Siklus Tahun Ajaran (T.A.):
+                    // Periode Juli - Desember (bulan 7 - 12): T.A. Y / (Y + 1)
+                    // Periode Januari - Juni (bulan 1 - 6): T.A. (Y - 1) / Y
+                    const year = date.getFullYear();
+                    const month = date.getMonth(); // 0 = Jan, 6 = Jul, 11 = Des
+                    if (month >= 6) {
+                        return `${year}/${year + 1}`;
+                    } else {
+                        return `${year - 1}/${year}`;
+                    }
+                },
+
+                updateTerminFromView(view) {
+                    if (!this.allTermins || this.allTermins.length === 0) return;
+
+                    let startDate, endDate;
+
+                    if (view.type === 'dayGridMonth' || view.type === 'listMonth') {
+                        const cs = view.currentStart;
+                        startDate = new Date(cs.getFullYear(), cs.getMonth(), 1);
+                        endDate = new Date(cs.getFullYear(), cs.getMonth() + 1, 0);
+                    } else {
+                        startDate = view.activeStart || view.currentStart;
+                        endDate = view.activeEnd || view.currentEnd;
+                    }
+
+                    const startStr = this.formatDateYMD(startDate);
+                    const endStr = this.formatDateYMD(endDate);
+
+                    let bestTermin = null;
+                    let maxOverlapScore = 0;
+
+                    for (const t of this.allTermins) {
+                        if (!t.tanggal_mulai || !t.tanggal_selesai) continue;
+
+                        const overlapStart = startStr > t.tanggal_mulai ? startStr : t.tanggal_mulai;
+                        const overlapEnd = endStr < t.tanggal_selesai ? endStr : t.tanggal_selesai;
+
+                        if (overlapStart <= overlapEnd) {
+                            const d1 = new Date(overlapStart);
+                            const d2 = new Date(overlapEnd);
+                            const diffDays = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+
+                            const isCurrentSemester = t.tipe_semester === '{{ $semesterFilter }}';
+                            const score = diffDays + (isCurrentSemester ? 1.0 : 0);
+
+                            if (score > maxOverlapScore) {
+                                maxOverlapScore = score;
+                                bestTermin = t;
+                            }
+                        }
+                    }
+
+                    // Hitung tanggal tengah untuk penentuan Tahun Ajaran dinamis
+                    const midDate = new Date(startDate.getTime() + (endDate.getTime() - startDate.getTime()) / 2);
+                    const tahunAjaranCalculated = (bestTermin && bestTermin.tahun_ajaran) 
+                        ? bestTermin.tahun_ajaran 
+                        : this.getTahunAjaranForDate(midDate);
+
+                    if (bestTermin) {
+                        this.displayedTermin = {
+                            nama: bestTermin.nama,
+                            is_aktif: !!bestTermin.is_aktif,
+                            tahun_ajaran: tahunAjaranCalculated,
+                            rentang_tanggal: bestTermin.rentang_tanggal,
+                            is_in_termin: true,
+                        };
+                    } else {
+                        this.displayedTermin = {
+                            nama: 'Di Luar Periode Termin',
+                            is_aktif: false,
+                            tahun_ajaran: tahunAjaranCalculated,
+                            rentang_tanggal: 'Di luar rentang termin akademik',
+                            is_in_termin: false,
+                        };
+                    }
+                },
+
                 initCalendar() {
                     const calendarEl = document.getElementById('publicCalendar');
                     if (!calendarEl || this.calendarInstance) return;
@@ -1110,6 +1261,9 @@
                         initialDate: '{{ $selectedDate }}',
                         height: 'auto',
                         expandRows: false,
+                        datesSet: (info) => {
+                            this.updateTerminFromView(info.view);
+                        },
                         headerToolbar: {
                             left: 'prev,next today',
                             center: 'title',

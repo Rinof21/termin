@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Dosen;
 use App\Models\Jadwal;
 use App\Models\Modul;
+use App\Models\Semester;
 use App\Models\Setting;
 use App\Models\Termin;
 use Carbon\Carbon;
@@ -38,6 +39,8 @@ class PublicScheduleController extends Controller
         }
 
         $termins = Termin::where('tipe_semester', $semesterFilter)->orderBy('nomor')->get();
+        $allTerminsList = Termin::orderBy('tanggal_mulai')->get();
+        $allSemestersList = Semester::orderBy('tanggal_mulai')->get();
 
         // Ambil Daftar Minggu
         $daftarMinggu = $currentTermin ? $currentTermin->daftar_minggu : [];
@@ -339,6 +342,8 @@ class PublicScheduleController extends Controller
             'currentView',
             'currentTermin',
             'termins',
+            'allTerminsList',
+            'allSemestersList',
             'daftarMinggu',
             'selectedMinggu',
             'mingguNomor',
