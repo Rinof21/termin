@@ -644,26 +644,26 @@ class KedokteranScheduleTest extends TestCase
 
     public function test_public_dashboard_and_events_api(): void
     {
-        // 1. Dashboard publik tanpa autentikasi (guest)
+        // 1. Dashboard publik tanpa autentikasi (guest) default ke tampilan kalender
         $response = $this->get('/');
         $response->assertStatus(200);
         $response->assertSee('TERMIN');
         $response->assertSee('S1 KEDOKTERAN');
-        $response->assertSee('Matriks Jadwal');
-        $response->assertSee('Kalender Termin');
-        $response->assertSee('ISHOMA');
+        $response->assertSee('publicCalendar');
+        $this->assertEquals('calendar', $response->viewData('currentView'));
 
         // Navigasi langsung dari klik kalender publik ke matriks via ?tanggal=2026-11-20
         $responseTanggalPublik = $this->get('/?view=matrix&tanggal=2026-11-20&semester=Genap');
         $responseTanggalPublik->assertStatus(200);
+        $this->assertEquals('matrix', $responseTanggalPublik->viewData('currentView'));
         $this->assertEquals(3, $responseTanggalPublik->viewData('mingguNomor'));
         $this->assertEquals('jumat', $responseTanggalPublik->viewData('hariSlug'));
         $this->assertEquals('2026-11-20', $responseTanggalPublik->viewData('selectedDate'));
 
-        // 2. Rute alias /jadwal
+        // 2. Rute alias /jadwal default kalender
         $responseJadwal = $this->get('/jadwal');
         $responseJadwal->assertStatus(200);
-        $responseJadwal->assertSee('Matriks Jadwal');
+        $this->assertEquals('calendar', $responseJadwal->viewData('currentView'));
 
         // 3. Endpoint API publik /api/public-events untuk FullCalendar
         $responseEvents = $this->get('/api/public-events');

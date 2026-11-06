@@ -22,7 +22,7 @@ class PublicScheduleController extends Controller
 
         $activeSemester = Setting::getActiveSemester();
         $semesterFilter = $request->query('semester', $activeSemester);
-        $currentView = $request->query('view', 'matrix'); // 'matrix' atau 'calendar'
+        $currentView = $request->query('view', 'calendar'); // 'calendar' (default homepage) atau 'matrix'
         $terminId = $request->query('termin_id');
         // Default tercentang: Pisah kolom per kelompok A.1 / A.2
         $splitKelompok = $request->boolean('split_kelompok', true);

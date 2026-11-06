@@ -43,8 +43,8 @@ class AuthAndCrudTest extends TestCase
 
         $response = $this->actingAs($user)->get('/dashboard');
         $response->assertStatus(200);
-        $response->assertSee('Beranda Dashboard');
-        $response->assertSee('Total Pengguna');
+        $response->assertSee('Jadwal Termin S1 Kedokteran');
+        $response->assertSee('id="calendar"', false);
     }
 
     public function test_user_crud_works(): void

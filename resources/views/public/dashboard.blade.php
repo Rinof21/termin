@@ -124,9 +124,45 @@
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
+            background-color: var(--fc-event-bg-color, #4f46e5) !important;
+            border-color: var(--fc-event-border-color, #4f46e5) !important;
+            color: #ffffff !important;
         }
         .fc-daygrid-event-dot {
             display: none !important;
+        }
+        .fc-daygrid-dot-event {
+            background-color: var(--fc-event-bg-color, #4f46e5) !important;
+            border-color: var(--fc-event-border-color, #4f46e5) !important;
+            color: #ffffff !important;
+        }
+        .fc-daygrid-dot-event .fc-event-time,
+        .fc-daygrid-dot-event .fc-event-title {
+            color: #ffffff !important;
+            font-weight: 600 !important;
+        }
+        .fc-daygrid-block-event {
+            background-color: var(--fc-event-bg-color, #4f46e5) !important;
+            border-color: var(--fc-event-border-color, #4f46e5) !important;
+            color: #ffffff !important;
+        }
+        .fc-more-link {
+            font-size: 0.725rem !important;
+            font-weight: 700 !important;
+            color: #4f46e5 !important;
+            padding: 2px 4px !important;
+        }
+        .fc-popover {
+            border-radius: 1rem !important;
+            border-color: #e2e8f0 !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+            z-index: 40 !important;
+        }
+        .fc-popover-header {
+            background-color: #f8fafc !important;
+            padding: 0.5rem 0.75rem !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
         }
         .fc-daygrid-day {
             cursor: pointer;
@@ -136,6 +172,32 @@
         }
         .fc-daygrid-day-frame:hover {
             background-color: #f1f5f9 !important;
+        }
+        .fc-timegrid-slot {
+            height: 2.25rem !important;
+        }
+        .fc-timegrid-event {
+            border-radius: 0.5rem !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+        .fc-timegrid-event .fc-event-main {
+            padding: 0 !important;
+            height: 100%;
+        }
+        .fc-timegrid-now-indicator-line {
+            border-color: #ef4444;
+        }
+        .fc-event-main-custom {
+            font-size: 0.725rem;
+            line-height: 1.25;
+            color: #ffffff;
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         @media print {
             header, nav, .no-print, #panel-informasi-detail {
@@ -184,22 +246,6 @@
                             <p class="text-[11px] text-slate-500 font-medium hidden sm:block">Portal Jadwal Kuliah & Blok Pembelajaran</p>
                         </div>
                     </a>
-                </div>
-
-                <!-- Center: Switcher Mode Tampilan (Matriks vs Kalender) -->
-                <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200 shadow-2xs">
-                    <button type="button" @click="setView('matrix')"
-                            :class="activeView === 'matrix' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 font-semibold'"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition">
-                        <i class="bi bi-grid-3x3 text-sm text-emerald-600"></i>
-                        <span>Matriks Jadwal</span>
-                    </button>
-                    <button type="button" @click="setView('calendar')"
-                            :class="activeView === 'calendar' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 font-semibold'"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition">
-                        <i class="bi bi-calendar3 text-sm text-brand-600"></i>
-                        <span>Kalender Termin</span>
-                    </button>
                 </div>
 
                 <!-- Right Action Buttons: Filter Semester, Cetak & Login -->
@@ -348,6 +394,14 @@
                                    title="Lompat ke Jadwal Hari Ini">
                                     <i class="bi bi-geo-alt-fill text-emerald-600"></i>
                                     <span>Hari Ini</span>
+                                </a>
+
+                                <!-- Tombol Kembali ke Kalender Termin -->
+                                <a href="{{ route('home', ['view' => 'calendar', 'semester' => $semesterFilter]) }}" 
+                                   class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 rounded-lg text-xs font-bold transition shrink-0 shadow-2xs"
+                                   title="Kembali ke Kalender Termin">
+                                    <i class="bi bi-calendar3 text-brand-600"></i>
+                                    <span>Kalender</span>
                                 </a>
                             </div>
 
@@ -954,9 +1008,17 @@
                             day: 'Hari',
                             list: 'Daftar'
                         },
+                        dayMaxEvents: 5,
+                        eventDisplay: 'block',
                         slotMinTime: '07:00:00',
                         slotMaxTime: '17:30:00',
                         allDaySlot: false,
+                        eventTimeFormat: {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            meridiem: false,
+                            hour12: false
+                        },
                         dateClick: (info) => {
                             // Klik kotak tanggal kalender langsung membuka tampilan matriks sesuai tanggal tersebut
                             const clickedDate = info.dateStr;
@@ -978,14 +1040,74 @@
                                 });
                         },
                         eventContent: function(arg) {
+                            const timeText = arg.timeText || '';
+                            const props = arg.event.extendedProps || {};
+                            const title = props.nama_kuliah || arg.event.title || '';
+                            const inisial = props.dosen_inisial || (props.dosen_utama ? props.dosen_utama.kode : '');
+                            const kelompok = props.kelompok && props.kelompok !== '-' && props.kelompok !== 'Semua Kelompok' ? props.kelompok : '';
+
                             if (arg.view.type === 'dayGridMonth') {
-                                const time = arg.timeText ? arg.timeText + ' ' : '';
-                                const title = arg.event.extendedProps.nama_kuliah || arg.event.title;
-                                return {
-                                    html: `<div class="fc-event-main" title="${title}"><span class="font-semibold">${time}</span>${title}</div>`
-                                };
+                                const el = document.createElement('div');
+                                el.className = 'fc-event-main-custom flex items-center gap-1.5 text-[11px] leading-tight px-1.5 py-0.5 overflow-hidden text-white';
+                                el.title = title;
+                                el.innerHTML = `
+                                    ${timeText ? `<span class="font-bold opacity-90 text-[10px] whitespace-nowrap shrink-0">${timeText}</span>` : ''}
+                                    <span class="truncate font-semibold">${title}</span>
+                                `;
+                                return { domNodes: [el] };
                             }
-                            return null;
+
+                            if (arg.view.type === 'timeGridWeek' || arg.view.type === 'timeGridDay') {
+                                const el = document.createElement('div');
+                                el.className = 'fc-event-main-custom h-full flex flex-col justify-between p-1.5 text-white leading-tight overflow-hidden';
+                                el.title = `${title} (${timeText})`;
+                                el.innerHTML = `
+                                    <div>
+                                        <div class="text-[10px] font-bold opacity-90 flex items-center justify-between gap-1 mb-1">
+                                            <span>${timeText}</span>
+                                            ${props.ruangan && props.ruangan !== 'Belum ditentukan' && props.ruangan !== '-' ? `<span class="opacity-80 text-[9px] truncate max-w-[85px] font-normal"><i class="bi bi-geo-alt"></i> ${props.ruangan}</span>` : ''}
+                                        </div>
+                                        <div class="flex items-center gap-1 flex-wrap mb-1">
+                                            ${kelompok ? `<span class="px-1.5 py-0.5 rounded bg-black/30 text-[9px] font-normal tracking-tight shrink-0">[${kelompok}]</span>` : ''}
+                                            ${inisial ? `<span class="px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-mono font-normal tracking-wide border border-white/30 shrink-0 inline-flex items-center gap-0.5" title="${props.dosen || ''}"><i class="bi bi-person text-[9px]"></i>[${inisial}]</span>` : ''}
+                                        </div>
+                                        <div class="text-xs font-bold leading-snug line-clamp-2">
+                                            ${title}
+                                        </div>
+                                    </div>
+                                    ${inisial ? `
+                                        <div class="pt-1 mt-1 border-t border-white/20 text-[9px] truncate opacity-90 flex items-center gap-1 font-normal" title="${props.dosen || ''}">
+                                            <span class="font-mono font-normal">[${inisial}]</span>
+                                            <span class="truncate font-normal">${props.dosen_utama ? props.dosen_utama.nama : (props.dosen || '')}</span>
+                                            ${props.dosen_pendamping && props.dosen_pendamping.length > 0 ? `<span class="opacity-85 text-[8px] font-normal shrink-0">(+${props.dosen_pendamping.length} tutor)</span>` : ''}
+                                        </div>
+                                    ` : ''}
+                                `;
+                                return { domNodes: [el] };
+                            }
+
+                            if (arg.view.type.startsWith('list')) {
+                                const el = document.createElement('div');
+                                el.className = 'flex items-center gap-2 font-medium text-slate-800';
+                                el.innerHTML = `
+                                    <span class="font-semibold">${title}</span>
+                                    ${kelompok ? `<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-normal border border-slate-200">[${kelompok}]</span>` : ''}
+                                    ${inisial ? `<span class="text-xs text-slate-500 font-normal">(${inisial})</span>` : ''}
+                                `;
+                                return { domNodes: [el] };
+                            }
+
+                            const fallback = document.createElement('div');
+                            fallback.className = 'fc-event-main-custom p-1 text-white';
+                            fallback.innerHTML = `<span class="font-bold">${timeText ? timeText + ' ' : ''}</span>${title}`;
+                            return { domNodes: [fallback] };
+                        },
+                        eventDidMount: function(info) {
+                            if (info.event.backgroundColor) {
+                                info.el.style.backgroundColor = info.event.backgroundColor;
+                                info.el.style.borderColor = info.event.borderColor || info.event.backgroundColor;
+                                info.el.style.color = '#ffffff';
+                            }
                         },
                         eventClick: (info) => {
                             const e = info.event;

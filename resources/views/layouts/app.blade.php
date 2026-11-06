@@ -51,7 +51,19 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="h-full font-sans antialiased text-slate-800 bg-slate-50" x-data="{ sidebarOpen: false }">
+<body class="h-full font-sans antialiased text-slate-800 bg-slate-50" 
+      x-data="{ 
+          sidebarOpen: false, 
+          sidebarCollapsed: localStorage.getItem('termin_sidebar_collapsed') === 'true',
+          toggleSidebar() {
+              if (window.innerWidth < 768) {
+                  this.sidebarOpen = !this.sidebarOpen;
+              } else {
+                  this.sidebarCollapsed = !this.sidebarCollapsed;
+                  localStorage.setItem('termin_sidebar_collapsed', this.sidebarCollapsed);
+              }
+          }
+      }">
     <div class="min-h-full flex flex-col md:flex-row">
         <!-- Backdrop Sidebar Mobile -->
         <div x-cloak x-show="sidebarOpen" 
@@ -64,25 +76,35 @@
              @click="sidebarOpen = false" 
              class="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm md:hidden"></div>
 
-        <!-- Sidebar Menu Navigasi -->
-        <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" 
-               class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200/80 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 md:sticky md:top-0 md:h-screen md:shrink-0 md:z-40">
+        <!-- Sidebar Menu Navigasi (Bisa Disembunyikan / Toggleable) -->
+        <aside :class="{
+                   'translate-x-0': sidebarOpen,
+                   '-translate-x-full': !sidebarOpen,
+                   'md:translate-x-0 md:w-64': !sidebarCollapsed,
+                   'md:-translate-x-full md:w-0 md:border-r-0 md:overflow-hidden md:p-0': sidebarCollapsed
+               }" 
+               class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200/80 flex flex-col transition-all duration-300 ease-in-out md:sticky md:top-0 md:h-screen md:shrink-0 md:z-40">
             
-            <!-- Logo & Nama Aplikasi -->
-            <div class="h-16 px-6 flex items-center justify-between border-b border-slate-100 shrink-0">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-md shadow-brand-500/20 font-bold text-lg">
-                        <i class="bi bi-shield-check"></i>
-                    </div>
-                    <div class="leading-tight">
-                        <span class="font-bold text-slate-900 text-base tracking-tight">TERMIN</span>
-                        <span class="block text-[10px] uppercase font-semibold text-brand-600 tracking-wider">Panel Admin</span>
-                    </div>
-                </a>
-                <button @click="sidebarOpen = false" class="text-slate-400 hover:text-slate-600 md:hidden">
-                    <i class="bi bi-x-lg text-lg"></i>
-                </button>
-            </div>
+            <div class="w-64 flex flex-col h-full shrink-0">
+                <!-- Logo & Nama Aplikasi -->
+                <div class="h-16 px-5 flex items-center justify-between border-b border-slate-100 shrink-0">
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-md shadow-brand-500/20 font-bold text-lg">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <div class="leading-tight">
+                            <span class="font-bold text-slate-900 text-base tracking-tight">TERMIN</span>
+                            <span class="block text-[10px] uppercase font-semibold text-brand-600 tracking-wider">Panel Admin</span>
+                        </div>
+                    </a>
+                    <!-- Tombol Tutup Mobile & Sembunyikan Desktop -->
+                    <button type="button" @click="toggleSidebar()" 
+                            class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+                            title="Sembunyikan Sidebar">
+                        <i class="bi bi-x-lg text-base md:hidden"></i>
+                        <i class="bi bi-chevron-left text-sm hidden md:inline"></i>
+                    </button>
+                </div>
 
             <!-- Tautan Menu Navigasi -->
             <div class="flex-1 px-4 py-5 space-y-6 overflow-y-auto">
@@ -91,9 +113,9 @@
                     <p class="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Menu Utama</p>
                     <nav class="space-y-1">
                         <a href="{{ route('dashboard') }}" 
-                           class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('dashboard') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                            <i class="bi bi-grid-fill text-lg {{ request()->routeIs('dashboard') ? 'text-brand-600' : 'text-slate-400' }}"></i>
-                            <span>Beranda Dashboard</span>
+                           class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('dashboard') || request()->routeIs('admin.jadwals.index') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                            <i class="bi bi-calendar3 text-lg {{ request()->routeIs('dashboard') || request()->routeIs('admin.jadwals.index') ? 'text-brand-600' : 'text-slate-400' }}"></i>
+                            <span class="flex-1">Kalender Termin</span>
                         </a>
                     </nav>
                 </div>
@@ -102,13 +124,6 @@
                 <div>
                     <p class="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Jadwal & Akademik</p>
                     <nav class="space-y-1">
-                        <!-- Kalender Termin FullCalendar -->
-                        <a href="{{ route('admin.jadwals.index') }}" 
-                           class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.jadwals.index') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                            <i class="bi bi-calendar3 text-lg {{ request()->routeIs('admin.jadwals.index') ? 'text-brand-600' : 'text-slate-400' }}"></i>
-                            <span class="flex-1">Kalender Termin</span>
-                        </a>
-
                         <!-- Matriks Jadwal (Tampilan Spreadsheet Modul) -->
                         <a href="{{ route('admin.jadwals.matrix') }}" 
                            class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.jadwals.matrix') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
@@ -200,17 +215,21 @@
                     </form>
                 </div>
             </div>
+            </div>
         </aside>
 
         <!-- Area Konten Utama -->
-        <div class="flex-1 flex flex-col min-w-0">
+        <div class="flex-1 flex flex-col min-w-0 transition-all duration-300">
             <!-- Header Navigasi Atas -->
-            <header class="h-16 bg-white border-b border-slate-200/80 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-                <div class="flex items-center gap-3">
-                    <!-- Tombol Menu Mobile -->
-                    <button @click="sidebarOpen = true" class="p-2 text-slate-500 hover:text-slate-700 rounded-lg md:hidden">
-                        <i class="bi bi-list text-2xl"></i>
+            <header class="h-16 bg-white border-b border-slate-200/80 px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+                <div class="flex items-center gap-2.5">
+                    <!-- Tombol Toggle Sidebar (Mobile & Desktop) -->
+                    <button type="button" @click="toggleSidebar()" 
+                            class="p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-xl transition flex items-center justify-center shrink-0"
+                            :title="sidebarCollapsed ? 'Tampilkan Sidebar' : 'Sembunyikan Sidebar'">
+                        <i class="bi text-xl" :class="sidebarCollapsed ? 'bi-layout-sidebar' : 'bi-layout-sidebar-inset'"></i>
                     </button>
+
                     <div class="text-sm font-medium text-slate-500 hidden sm:block">
                         @yield('breadcrumbs')
                     </div>
