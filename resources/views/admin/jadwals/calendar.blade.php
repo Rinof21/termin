@@ -113,6 +113,15 @@
         font-weight: 700 !important;
         font-size: 0.8rem !important;
     }
+    .fc-daygrid-day {
+        cursor: pointer;
+    }
+    .fc-daygrid-day-frame {
+        transition: background-color 0.15s ease;
+    }
+    .fc-daygrid-day-frame:hover {
+        background-color: #f1f5f9 !important;
+    }
 </style>
 
 <div class="space-y-6" x-data="calendarApp()">
@@ -520,6 +529,10 @@
                     slotDuration: '00:20:00',
                     slotLabelInterval: '01:00:00',
                     nowIndicator: true,
+                    dateClick: function(info) {
+                        const clickedDate = info.dateStr;
+                        window.location.href = '{{ route("admin.jadwals.matrix") }}?tanggal=' + clickedDate + '&semester={{ $activeSemester }}';
+                    },
                     eventTimeFormat: {
                         hour: '2-digit',
                         minute: '2-digit',

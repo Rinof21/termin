@@ -119,9 +119,16 @@
     </div>
 
     <!-- Footer Note -->
-    <p class="text-center text-xs text-slate-400 mt-6">
-        &copy; {{ date('Y') }} Termin Admin &bull; Built with Laravel & Spatie Permission
-    </p>
+    <div class="mt-6 text-center space-y-2">
+        <a href="{{ route('home') }}" 
+           class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-800 transition">
+            <i class="bi bi-arrow-left"></i>
+            <span>Kembali ke Portal Jadwal Publik</span>
+        </a>
+        <p class="text-xs text-slate-400">
+            &copy; {{ date('Y') }} Termin Admin &bull; Sistem Akademik S1 Kedokteran
+        </p>
+    </div>
 </div>
 
 <script>

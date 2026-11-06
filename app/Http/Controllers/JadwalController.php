@@ -87,12 +87,14 @@ class JadwalController extends Controller
      */
     public function matrix(Request $request)
     {
+        \Carbon\Carbon::setLocale('id');
+        app()->setLocale('id');
+
         $activeSemester = Setting::getActiveSemester();
         $semesterFilter = $request->query('semester', $activeSemester);
         $terminId = $request->query('termin_id');
-        $mingguNomor = (int) $request->query('minggu', 1);
-        $hariSlug = $request->query('hari', 'senin');
-        $splitKelompok = $request->has('split_kelompok') ? $request->boolean('split_kelompok') : true;
+        // Default murni 1 Modul = 1 Kolom sesuai jumlah modul di aplikasi (kecuali dicentang)
+        $splitKelompok = $request->boolean('split_kelompok', false);
 
         // Ambil Termin yang sesuai
         if ($terminId) {
@@ -123,6 +125,73 @@ class JadwalController extends Controller
             }
         }
 
+        // --- DETEKSI TANGGAL HARI INI (TODAY) SECARA OTOMATIS ---
+        $today = Carbon::today();
+        $todayDateStr = $today->format('Y-m-d');
+
+        $daySlugMap = [
+            Carbon::MONDAY => 'senin',
+            Carbon::TUESDAY => 'selasa',
+            Carbon::WEDNESDAY => 'rabu',
+            Carbon::THURSDAY => 'kamis',
+            Carbon::FRIDAY => 'jumat',
+            Carbon::SATURDAY => 'sabtu',
+            Carbon::SUNDAY => 'senin',
+        ];
+
+        $defaultMingguNomor = 1;
+        $defaultHariSlug = 'senin';
+        $todayInTermin = false;
+
+        foreach ($daftarMinggu as $m) {
+            if ($todayDateStr >= $m['tanggal_mulai'] && $todayDateStr <= $m['tanggal_selesai']) {
+                $defaultMingguNomor = (int) $m['nomor'];
+                $defaultHariSlug = $daySlugMap[$today->dayOfWeek] ?? 'senin';
+                $todayInTermin = true;
+                break;
+            }
+        }
+
+        // Tentukan nomor minggu aktif
+        $mingguNomor = $request->has('minggu') ? (int) $request->query('minggu') : $defaultMingguNomor;
+
+        // Tentukan hari aktif: jika ada di request pakai itu, jika tidak ada dan ini minggu hari ini pakai hari ini
+        if ($request->has('hari')) {
+            $hariSlug = $request->query('hari');
+        } elseif ($mingguNomor === $defaultMingguNomor && $todayInTermin) {
+            $hariSlug = $defaultHariSlug;
+        } else {
+            $hariSlug = 'senin';
+        }
+
+        // --- DUKUNGAN KLIK KOTAK TANGGAL DARI KALENDER: ?tanggal=YYYY-MM-DD ---
+        if ($request->has('tanggal') && !empty($request->query('tanggal'))) {
+            try {
+                $targetDate = Carbon::parse($request->query('tanggal'));
+                $targetDateStr = $targetDate->format('Y-m-d');
+
+                $matchingTermin = \App\Models\Termin::where('tipe_semester', $semesterFilter)
+                    ->where('tanggal_mulai', '<=', $targetDateStr)
+                    ->where('tanggal_selesai', '>=', $targetDateStr)
+                    ->first();
+                if ($matchingTermin) {
+                    $currentTermin = $matchingTermin;
+                    $daftarMinggu = $currentTermin->daftar_minggu;
+                }
+
+                foreach ($daftarMinggu as $m) {
+                    if ($targetDateStr >= $m['tanggal_mulai'] && $targetDateStr <= $m['tanggal_selesai']) {
+                        $mingguNomor = (int) $m['nomor'];
+                        break;
+                    }
+                }
+
+                $hariSlug = $daySlugMap[$targetDate->dayOfWeek] ?? 'senin';
+            } catch (\Exception $e) {
+                // Abaikan jika format tidak valid
+            }
+        }
+
         $selectedMinggu = collect($daftarMinggu)->firstWhere('nomor', $mingguNomor) ?: $daftarMinggu[0];
         $weekStartDate = Carbon::parse($selectedMinggu['tanggal_mulai']);
 
@@ -132,6 +201,7 @@ class JadwalController extends Controller
         foreach ($dayNames as $idx => $dName) {
             $dateObj = (clone $weekStartDate)->addDays($idx);
             $slug = strtolower(str_replace("'", "", $dName));
+            $isToday = ($dateObj->format('Y-m-d') === $todayDateStr);
             $days[] = [
                 'index' => $idx,
                 'slug' => $slug,
@@ -139,6 +209,7 @@ class JadwalController extends Controller
                 'date' => $dateObj->format('Y-m-d'),
                 'formatted' => $dateObj->translatedFormat('l, d F Y'),
                 'short_date' => $dateObj->translatedFormat('d M'),
+                'is_today' => $isToday,
             ];
         }
 
@@ -148,71 +219,48 @@ class JadwalController extends Controller
         // Ambil modul-modul pada semester terpilih
         $moduls = Modul::where('tipe_semester', $semesterFilter)->orderBy('id')->get();
 
-        // Susun Kolom: Modul & Kelompok (A.1, A.2 jika ada)
+        // Susun Kolom Matriks: 1 Modul = 1 Kolom Murni (Persis sesuai jumlah data modul di aplikasi)
         $columns = [];
         foreach ($moduls as $m) {
-            if (preg_match('/\([A-Za-z0-9\.\s]+\)$/', $m->nama)) {
-                $columns[] = [
-                    'id' => 'modul_' . $m->id,
-                    'modul_id' => $m->id,
-                    'modul' => $m,
-                    'kelompok' => null,
-                    'nama' => $m->nama,
-                    'kode' => $m->kode,
-                    'warna' => $m->warna ?: '#4f46e5',
-                ];
-                continue;
-            }
+            if ($splitKelompok) {
+                // Hanya jika opsi 'Pisah Kolom' dicentang oleh user
+                $kelompoksInDb = Jadwal::where('modul_id', $m->id)
+                    ->whereNotNull('kelompok')
+                    ->whereNotIn('kelompok', ['Semua Kelompok', 'Semua', ''])
+                    ->distinct()
+                    ->pluck('kelompok')
+                    ->all();
 
-            $kelompoksInDb = Jadwal::where('modul_id', $m->id)
-                ->whereNotNull('kelompok')
-                ->whereNotIn('kelompok', ['Semua Kelompok', 'Semua', ''])
-                ->distinct()
-                ->pluck('kelompok')
-                ->all();
-
-            $shouldSplit = false;
-            $groupList = [];
-            if (!empty($kelompoksInDb)) {
-                $shouldSplit = true;
-                $groupList = $kelompoksInDb;
-                if (in_array('A.1', $groupList) && !in_array('A.2', $groupList)) {
-                    $groupList[] = 'A.2';
+                if (!empty($kelompoksInDb)) {
+                    if (in_array('A.1', $kelompoksInDb) && !in_array('A.2', $kelompoksInDb)) {
+                        $kelompoksInDb[] = 'A.2';
+                    }
+                    sort($kelompoksInDb);
+                    foreach ($kelompoksInDb as $grp) {
+                        $columns[] = [
+                            'id' => 'modul_' . $m->id . '_' . preg_replace('/[^a-zA-Z0-9]/', '_', $grp),
+                            'modul_id' => $m->id,
+                            'modul' => $m,
+                            'kelompok' => $grp,
+                            'nama' => $m->nama . ' (' . $grp . ')',
+                            'kode' => $m->kode,
+                            'warna' => $m->warna ?: '#4f46e5',
+                        ];
+                    }
+                    continue;
                 }
-                sort($groupList);
-            } elseif ($splitKelompok && (
-                stripos($m->nama, 'Biomedis') !== false || 
-                stripos($m->nama, 'Etnomedik') !== false ||
-                stripos($m->nama, 'Respirasi') !== false ||
-                stripos($m->nama, 'Kardiovaskular') !== false
-            )) {
-                $shouldSplit = true;
-                $groupList = ['A.1', 'A.2'];
             }
 
-            if ($shouldSplit && !empty($groupList)) {
-                foreach ($groupList as $grp) {
-                    $columns[] = [
-                        'id' => 'modul_' . $m->id . '_' . preg_replace('/[^a-zA-Z0-9]/', '_', $grp),
-                        'modul_id' => $m->id,
-                        'modul' => $m,
-                        'kelompok' => $grp,
-                        'nama' => $m->nama . ' (' . $grp . ')',
-                        'kode' => $m->kode,
-                        'warna' => $m->warna ?: '#4f46e5',
-                    ];
-                }
-            } else {
-                $columns[] = [
-                    'id' => 'modul_' . $m->id,
-                    'modul_id' => $m->id,
-                    'modul' => $m,
-                    'kelompok' => null,
-                    'nama' => $m->nama,
-                    'kode' => $m->kode,
-                    'warna' => $m->warna ?: '#4f46e5',
-                ];
-            }
+            // Default: 1 Modul = 1 Kolom Murni
+            $columns[] = [
+                'id' => 'modul_' . $m->id,
+                'modul_id' => $m->id,
+                'modul' => $m,
+                'kelompok' => null,
+                'nama' => $m->nama,
+                'kode' => $m->kode,
+                'warna' => $m->warna ?: '#4f46e5',
+            ];
         }
 
         // 9 Sesi Standar Kurikulum S1 Kedokteran
@@ -351,10 +399,12 @@ class JadwalController extends Controller
             'mingguNomor',
             'days',
             'selectedDay',
+            'hariSlug',
             'selectedDate',
             'columns',
             'timeSlots',
             'grid',
+            'jadwalsOnDate',
             'moduls',
             'dosens',
             'splitKelompok'

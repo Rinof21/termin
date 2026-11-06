@@ -24,6 +24,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Set locale bahasa Indonesia untuk tanggal dan waktu Carbon
+        \Carbon\Carbon::setLocale('id');
+        app()->setLocale('id');
+
         // Bagikan variabel semester & termin aktif secara global ke seluruh tampilan Blade
         View::composer('*', function ($view) {
             $activeSemester = 'Genap';

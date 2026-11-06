@@ -345,6 +345,10 @@
                                 <p class="font-semibold text-slate-800">{{ Auth::user()->name }}</p>
                                 <p class="text-slate-500 truncate">{{ Auth::user()->email }}</p>
                             </div>
+                            <a href="{{ route('home') }}" target="_blank" class="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition border-b border-slate-100">
+                                <i class="bi bi-box-arrow-up-right text-brand-600"></i>
+                                <span>Lihat Portal Publik</span>
+                            </a>
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf
                                 <button type="submit" class="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition">

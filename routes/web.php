@@ -7,16 +7,17 @@ use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\MataKuliahController;
 use App\Http\Controllers\ModulController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PublicScheduleController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SemesterController;
 use App\Http\Controllers\TerminController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-// Redirect root to dashboard (will redirect to login if unauthenticated)
-Route::get('/', function () {
-    return redirect()->route('dashboard');
-});
+// Public Schedule Dashboard (Bisa diakses mahasiswa, dosen & umum tanpa login)
+Route::get('/', [PublicScheduleController::class, 'index'])->name('home');
+Route::get('/jadwal', [PublicScheduleController::class, 'index'])->name('public.jadwal');
+Route::get('/api/public-events', [PublicScheduleController::class, 'events'])->name('public.events');
 
 // Guest Authentication Routes
 Route::middleware('guest')->group(function () {

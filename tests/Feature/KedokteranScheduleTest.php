@@ -578,6 +578,63 @@ class KedokteranScheduleTest extends TestCase
         // 3. Tampilan dengan split_kelompok toggle
         $responseSplit = $this->actingAs($admin)->get('/admin/jadwals/matrix?semester=Ganjil&split_kelompok=1');
         $responseSplit->assertStatus(200);
+
+        // 4. Pastikan default tanpa split persis sesuai jumlah modul di database
+        $modulsCount = Modul::where('tipe_semester', 'Genap')->count();
+        $responseGenap = $this->actingAs($admin)->get('/admin/jadwals/matrix?semester=Genap');
+        $responseGenap->assertStatus(200);
+        $this->assertCount($modulsCount, $responseGenap->viewData('columns'));
+
+        // 5. Navigasi langsung ke tanggal via query parameter ?tanggal=2026-11-20 (Jum'at Minggu 3)
+        $responseTanggal = $this->actingAs($admin)->get('/admin/jadwals/matrix?tanggal=2026-11-20&semester=Genap');
+        $responseTanggal->assertStatus(200);
+        $this->assertEquals(3, $responseTanggal->viewData('mingguNomor'));
+        $this->assertEquals('jumat', $responseTanggal->viewData('hariSlug'));
+        $this->assertEquals('2026-11-20', $responseTanggal->viewData('selectedDate'));
+    }
+
+    public function test_public_dashboard_and_events_api(): void
+    {
+        // 1. Dashboard publik tanpa autentikasi (guest)
+        $response = $this->get('/');
+        $response->assertStatus(200);
+        $response->assertSee('TERMIN');
+        $response->assertSee('S1 KEDOKTERAN');
+        $response->assertSee('Matriks Jadwal');
+        $response->assertSee('Kalender Termin');
+        $response->assertSee('ISHOMA');
+
+        // Navigasi langsung dari klik kalender publik ke matriks via ?tanggal=2026-11-20
+        $responseTanggalPublik = $this->get('/?view=matrix&tanggal=2026-11-20&semester=Genap');
+        $responseTanggalPublik->assertStatus(200);
+        $this->assertEquals(3, $responseTanggalPublik->viewData('mingguNomor'));
+        $this->assertEquals('jumat', $responseTanggalPublik->viewData('hariSlug'));
+        $this->assertEquals('2026-11-20', $responseTanggalPublik->viewData('selectedDate'));
+
+        // 2. Rute alias /jadwal
+        $responseJadwal = $this->get('/jadwal');
+        $responseJadwal->assertStatus(200);
+        $responseJadwal->assertSee('Matriks Jadwal');
+
+        // 3. Endpoint API publik /api/public-events untuk FullCalendar
+        $responseEvents = $this->get('/api/public-events');
+        $responseEvents->assertStatus(200);
+        $responseEvents->assertJsonStructure([
+            '*' => [
+                'id',
+                'title',
+                'start',
+                'end',
+                'backgroundColor',
+                'extendedProps' => [
+                    'nama_kuliah',
+                    'modul_nama',
+                    'dosen',
+                    'ruangan',
+                    'jam',
+                ]
+            ]
+        ]);
     }
 }
 
