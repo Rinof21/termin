@@ -86,6 +86,35 @@ class KedokteranScheduleTest extends TestCase
         $response = $this->actingAs($admin)->delete("/admin/dosens/{$dosen->id}");
         $response->assertRedirect('/admin/dosens');
         $this->assertDatabaseMissing('dosens', ['id' => $dosen->id]);
+
+        // Quick Store Dosen Luar / Tidak Tetap via AJAX
+        $responseQuick = $this->actingAs($admin)->postJson('/admin/dosens/quick-store', [
+            'nama' => 'dr. Bambang Santoso, Sp.A',
+            'kode' => 'BMS',
+        ]);
+        $responseQuick->assertStatus(200);
+        $responseQuick->assertJson([
+            'success' => true,
+            'dosen' => [
+                'kode' => 'BMS',
+                'nama' => 'dr. Bambang Santoso, Sp.A',
+            ]
+        ]);
+        $this->assertDatabaseHas('dosens', ['kode' => 'BMS']);
+
+        // Quick Store Dosen Luar dengan generate inisial otomatis
+        $responseAuto = $this->actingAs($admin)->postJson('/admin/dosens/quick-store', [
+            'nama' => 'Prof. Hendra Wijaya',
+        ]);
+        $responseAuto->assertStatus(200);
+        $responseAuto->assertJson(['success' => true]);
+        $autoKode = $responseAuto->json('dosen.kode');
+        $this->assertNotEmpty($autoKode);
+        $this->assertDatabaseHas('dosens', ['kode' => $autoKode, 'nama' => 'Prof. Hendra Wijaya']);
+
+        // Bersihkan
+        Dosen::where('kode', 'BMS')->delete();
+        Dosen::where('kode', $autoKode)->delete();
     }
 
     public function test_modul_crud(): void
@@ -593,11 +622,17 @@ class KedokteranScheduleTest extends TestCase
         $responseSplit = $this->actingAs($admin)->get('/admin/jadwals/matrix?semester=Ganjil&split_kelompok=1');
         $responseSplit->assertStatus(200);
 
-        // 4. Pastikan default tanpa split persis sesuai jumlah modul di database
-        $modulsCount = Modul::where('tipe_semester', 'Genap')->count();
+        // 4. Default: split_kelompok tercentang secara default
         $responseGenap = $this->actingAs($admin)->get('/admin/jadwals/matrix?semester=Genap');
         $responseGenap->assertStatus(200);
-        $this->assertCount($modulsCount, $responseGenap->viewData('columns'));
+        $this->assertTrue($responseGenap->viewData('splitKelompok'));
+
+        // Dan jika user menonaktifkan centang (split_kelompok=0), kolom murni 1 modul = 1 kolom
+        $modulsCount = Modul::where('tipe_semester', 'Genap')->count();
+        $responseNoSplit = $this->actingAs($admin)->get('/admin/jadwals/matrix?semester=Genap&split_kelompok=0');
+        $responseNoSplit->assertStatus(200);
+        $this->assertFalse($responseNoSplit->viewData('splitKelompok'));
+        $this->assertCount($modulsCount, $responseNoSplit->viewData('columns'));
 
         // 5. Navigasi langsung ke tanggal via query parameter ?tanggal=2026-11-20 (Jum'at Minggu 3)
         $responseTanggal = $this->actingAs($admin)->get('/admin/jadwals/matrix?tanggal=2026-11-20&semester=Genap');

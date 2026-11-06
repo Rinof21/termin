@@ -93,8 +93,8 @@ class JadwalController extends Controller
         $activeSemester = Setting::getActiveSemester();
         $semesterFilter = $request->query('semester', $activeSemester);
         $terminId = $request->query('termin_id');
-        // Default murni 1 Modul = 1 Kolom sesuai jumlah modul di aplikasi (kecuali dicentang)
-        $splitKelompok = $request->boolean('split_kelompok', false);
+        // Default tercentang: Pisah kolom per kelompok A.1 / A.2
+        $splitKelompok = $request->boolean('split_kelompok', true);
 
         // Ambil Termin yang sesuai
         if ($terminId) {

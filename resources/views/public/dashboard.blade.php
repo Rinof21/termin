@@ -358,6 +358,7 @@
                                     <input type="hidden" name="semester" value="{{ $semesterFilter }}">
                                     <input type="hidden" name="minggu" value="{{ $mingguNomor }}">
                                     <input type="hidden" name="hari" value="{{ $selectedDay['slug'] }}">
+                                    <input type="hidden" name="split_kelompok" value="0">
                                     <label class="inline-flex items-center gap-2 text-xs text-slate-600 font-medium cursor-pointer">
                                         <input type="checkbox" name="split_kelompok" value="1" {{ $splitKelompok ? 'checked' : '' }} 
                                                onchange="this.form.submit()"

@@ -24,8 +24,8 @@ class PublicScheduleController extends Controller
         $semesterFilter = $request->query('semester', $activeSemester);
         $currentView = $request->query('view', 'matrix'); // 'matrix' atau 'calendar'
         $terminId = $request->query('termin_id');
-        // Default murni 1 Modul = 1 Kolom sesuai jumlah modul di aplikasi (kecuali dicentang)
-        $splitKelompok = $request->boolean('split_kelompok', false);
+        // Default tercentang: Pisah kolom per kelompok A.1 / A.2
+        $splitKelompok = $request->boolean('split_kelompok', true);
 
         // Ambil Termin yang sesuai
         if ($terminId) {

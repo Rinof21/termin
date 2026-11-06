@@ -183,13 +183,69 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
                                 <i class="bi bi-search"></i>
                             </div>
-                            <input type="text" x-ref="searchInput" x-model="search"
+                            <input type="text" x-ref="searchInput" x-model="search" @input="onSearchChange()"
                                    placeholder="Ketik inisial [EFI] atau nama dosen..."
                                    class="w-full pl-9 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                            <button type="button" x-show="search" @click="search = ''; $refs.searchInput.focus()"
+                            <button type="button" x-show="search" @click="search = ''; showCustomForm = false; $refs.searchInput.focus()"
                                     class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs">
                                 <i class="bi bi-x-lg"></i>
                             </button>
+                        </div>
+
+                        <!-- Tombol / Form Daftarkan Dosen Luar / Tidak Tetap -->
+                        <div x-show="search.trim().length > 0" class="pt-1">
+                            <div x-show="!showCustomForm" 
+                                 @click="openCustomForm()"
+                                 class="p-2.5 rounded-xl bg-indigo-50/90 hover:bg-indigo-100/90 border border-indigo-200/90 text-indigo-950 cursor-pointer transition flex items-center justify-between group shadow-2xs">
+                                <div class="flex items-center gap-2 truncate">
+                                    <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0 shadow-2xs">
+                                        <i class="bi bi-person-plus-fill"></i>
+                                    </span>
+                                    <div class="truncate text-left">
+                                        <span class="block text-[11px] font-bold text-indigo-950 truncate">
+                                            + Daftarkan Dosen Luar: "<span class="underline" x-text="search.trim()"></span>"
+                                        </span>
+                                        <span class="block text-[10px] text-indigo-600 font-normal">Klik untuk atur inisial & pilih langsung</span>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] bg-white border border-indigo-200 text-indigo-700 font-bold px-2 py-0.5 rounded-md shrink-0 shadow-2xs">
+                                    Dosen Luar
+                                </span>
+                            </div>
+
+                            <!-- Form Inline Pendaftaran Dosen Luar -->
+                            <div x-show="showCustomForm" class="p-3 rounded-xl bg-indigo-50 border border-indigo-200 space-y-2 shadow-2xs">
+                                <div class="flex items-center justify-between text-[11px] font-bold text-indigo-950 pb-1 border-b border-indigo-200/60">
+                                    <span class="flex items-center gap-1.5">
+                                        <i class="bi bi-person-plus-fill text-indigo-600"></i>
+                                        Daftarkan Dosen Luar / Tidak Tetap
+                                    </span>
+                                    <button type="button" @click="showCustomForm = false" class="text-slate-400 hover:text-slate-600 text-xs">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-12 gap-2">
+                                    <div class="col-span-4">
+                                        <label class="block text-[10px] font-bold uppercase text-indigo-700 mb-0.5">Inisial / Kode</label>
+                                        <input type="text" x-model="newDosenKode" placeholder="[KOD]" maxlength="10"
+                                               class="w-full px-2 py-1.5 bg-white border border-indigo-300 rounded-lg text-xs font-mono font-bold text-center uppercase focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                                    </div>
+                                    <div class="col-span-8">
+                                        <label class="block text-[10px] font-bold uppercase text-indigo-700 mb-0.5">Nama & Gelar Dosen</label>
+                                        <input type="text" x-model="newDosenNama" placeholder="Nama Dosen Luar..."
+                                               class="w-full px-2.5 py-1.5 bg-white border border-indigo-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                                    </div>
+                                </div>
+                                <div x-show="errorMessage" class="text-[11px] text-rose-600 font-semibold" x-text="errorMessage"></div>
+                                <div class="flex items-center justify-end gap-2 pt-1">
+                                    <button type="button" @click="showCustomForm = false" class="px-2.5 py-1 text-slate-500 hover:text-slate-700 text-xs font-medium">Batal</button>
+                                    <button type="button" @click="saveNewDosen()" :disabled="isSubmitting"
+                                            class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1.5">
+                                        <span x-show="!isSubmitting"><i class="bi bi-check-lg"></i> Simpan & Pilih</span>
+                                        <span x-show="isSubmitting"><i class="bi bi-arrow-repeat animate-spin"></i> Menyimpan...</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Daftar Opsi Dosen yang Terfilter -->
@@ -269,13 +325,69 @@
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
                                         <i class="bi bi-search"></i>
                                     </div>
-                                    <input type="text" x-ref="pendampingSearchInput" x-model="search"
+                                    <input type="text" x-ref="pendampingSearchInput" x-model="search" @input="onSearchChange()"
                                            placeholder="Ketik inisial [DES] atau nama dosen..."
                                            class="w-full pl-9 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                                    <button type="button" x-show="search" @click="search = ''; $refs.pendampingSearchInput.focus()"
+                                    <button type="button" x-show="search" @click="search = ''; showCustomForm = false; $refs.pendampingSearchInput.focus()"
                                             class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
+                                </div>
+
+                                <!-- Tombol / Form Daftarkan Dosen Luar untuk Pendamping -->
+                                <div x-show="search.trim().length > 0" class="pt-1">
+                                    <div x-show="!showCustomForm" 
+                                         @click="openCustomForm()"
+                                         class="p-2.5 rounded-xl bg-indigo-50/90 hover:bg-indigo-100/90 border border-indigo-200/90 text-indigo-950 cursor-pointer transition flex items-center justify-between group shadow-2xs">
+                                        <div class="flex items-center gap-2 truncate">
+                                            <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs shrink-0 shadow-2xs">
+                                                <i class="bi bi-person-plus-fill"></i>
+                                            </span>
+                                            <div class="truncate text-left">
+                                                <span class="block text-[11px] font-bold text-indigo-950 truncate">
+                                                    + Daftarkan Dosen Luar: "<span class="underline" x-text="search.trim()"></span>"
+                                                </span>
+                                                <span class="block text-[10px] text-indigo-600 font-normal">Klik untuk atur inisial & tambahkan</span>
+                                            </div>
+                                        </div>
+                                        <span class="text-[10px] bg-white border border-indigo-200 text-indigo-700 font-bold px-2 py-0.5 rounded-md shrink-0 shadow-2xs">
+                                            Dosen Luar
+                                        </span>
+                                    </div>
+
+                                    <!-- Form Inline Pendaftaran Dosen Luar -->
+                                    <div x-show="showCustomForm" class="p-3 rounded-xl bg-indigo-50 border border-indigo-200 space-y-2 shadow-2xs">
+                                        <div class="flex items-center justify-between text-[11px] font-bold text-indigo-950 pb-1 border-b border-indigo-200/60">
+                                            <span class="flex items-center gap-1.5">
+                                                <i class="bi bi-person-plus-fill text-indigo-600"></i>
+                                                Daftarkan Dosen Luar / Tidak Tetap
+                                            </span>
+                                            <button type="button" @click="showCustomForm = false" class="text-slate-400 hover:text-slate-600 text-xs">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                        <div class="grid grid-cols-12 gap-2">
+                                            <div class="col-span-4">
+                                                <label class="block text-[10px] font-bold uppercase text-indigo-700 mb-0.5">Inisial / Kode</label>
+                                                <input type="text" x-model="newDosenKode" placeholder="[KOD]" maxlength="10"
+                                                       class="w-full px-2 py-1.5 bg-white border border-indigo-300 rounded-lg text-xs font-mono font-bold text-center uppercase focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                                            </div>
+                                            <div class="col-span-8">
+                                                <label class="block text-[10px] font-bold uppercase text-indigo-700 mb-0.5">Nama & Gelar Dosen</label>
+                                                <input type="text" x-model="newDosenNama" placeholder="Nama Dosen Luar..."
+                                                       class="w-full px-2.5 py-1.5 bg-white border border-indigo-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                                            </div>
+                                        </div>
+                                        <div x-show="errorMessage" class="text-[11px] text-rose-600 font-semibold" x-text="errorMessage"></div>
+                                        <div class="flex items-center justify-end gap-2 pt-1">
+                                            <button type="button" @click="showCustomForm = false" class="px-2.5 py-1 text-slate-500 hover:text-slate-700 text-xs font-medium">Batal</button>
+                                            <button type="button" @click="saveNewDosen()" :disabled="isSubmitting"
+                                                    class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1.5">
+                                                <span x-show="!isSubmitting"><i class="bi bi-check-lg"></i> Simpan & Tambahkan</span>
+                                                <span x-show="isSubmitting"><i class="bi bi-arrow-repeat animate-spin"></i> Menyimpan...</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="max-h-56 overflow-y-auto space-y-1 text-xs">
@@ -448,9 +560,6 @@
                            placeholder="Contoh: A.1, A.2, Kelompok 8, Semua Kelompok"
                            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 transition">
                 </div>
-                           placeholder="Contoh: A.1, A.2, Kelompok 8, Semua Kelompok"
-                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 transition">
-                </div>
 
                 <div>
                     <label for="ruangan" class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
@@ -566,6 +675,19 @@
             selectedId: initialId ? String(initialId) : '',
             search: '',
             isOpen: false,
+            newDosenKode: '',
+            newDosenNama: '',
+            showCustomForm: false,
+            isSubmitting: false,
+            errorMessage: '',
+
+            init() {
+                window.addEventListener('dosen-added', (e) => {
+                    if (e.detail && !this.dosenList.some(d => String(d.id) === String(e.detail.id))) {
+                        this.dosenList.push(e.detail);
+                    }
+                });
+            },
 
             get filteredDosens() {
                 if (!this.search.trim()) {
@@ -586,10 +708,89 @@
                 return found ? `[${found.kode}] ${found.nama}` : '-- Pilih Dosen Pengampu --';
             },
 
+            onSearchChange() {
+                const raw = this.search.trim();
+                if (raw) {
+                    this.newDosenNama = raw;
+                    this.newDosenKode = this.suggestKode(raw);
+                }
+                this.errorMessage = '';
+            },
+
+            openCustomForm() {
+                this.newDosenNama = this.search.trim();
+                this.newDosenKode = this.suggestKode(this.newDosenNama);
+                this.showCustomForm = true;
+                this.errorMessage = '';
+            },
+
+            suggestKode(name) {
+                const clean = (name || '').replace(/\b(dr|drg|prof|ir|sp|subsp|m\.kes|m\.ked|m\.sc|ph\.d|s\.ked|m\.biomed|aiv|k)\b/gi, '')
+                                  .replace(/[^a-zA-Z\s]/g, '')
+                                  .trim();
+                const words = clean.split(/\s+/).filter(Boolean);
+                let code = '';
+                if (words.length >= 3) {
+                    code = words[0][0] + words[1][0] + words[2][0];
+                } else if (words.length === 2) {
+                    code = words[0].substring(0, 2) + words[1][0];
+                } else if (words.length === 1) {
+                    code = words[0].substring(0, 3);
+                } else {
+                    code = (name || '').replace(/[^a-zA-Z]/g, '').substring(0, 3);
+                }
+                return (code || 'DL').toUpperCase();
+            },
+
+            async saveNewDosen() {
+                if (!this.newDosenNama.trim()) {
+                    this.errorMessage = 'Nama dosen tidak boleh kosong.';
+                    return;
+                }
+                this.isSubmitting = true;
+                this.errorMessage = '';
+
+                try {
+                    const res = await fetch('{{ route("admin.dosens.quick-store") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            nama: this.newDosenNama.trim(),
+                            kode: this.newDosenKode.trim()
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        this.errorMessage = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : 'Gagal menambahkan dosen.');
+                        this.isSubmitting = false;
+                        return;
+                    }
+
+                    const newDosen = data.dosen;
+                    this.dosenList.push(newDosen);
+                    this.choose(newDosen.id);
+                    this.showCustomForm = false;
+                    this.isSubmitting = false;
+
+                    // Beritahu picker dosen pendamping
+                    window.dispatchEvent(new CustomEvent('dosen-added', { detail: newDosen }));
+                } catch (err) {
+                    this.errorMessage = 'Terjadi kesalahan koneksi.';
+                    this.isSubmitting = false;
+                }
+            },
+
             toggle() {
                 this.isOpen = !this.isOpen;
                 if (this.isOpen) {
                     this.search = '';
+                    this.showCustomForm = false;
+                    this.errorMessage = '';
                     this.$nextTick(() => {
                         if (this.$refs.searchInput) {
                             this.$refs.searchInput.focus();
@@ -602,6 +803,7 @@
                 this.selectedId = id ? String(id) : '';
                 this.isOpen = false;
                 this.search = '';
+                this.showCustomForm = false;
                 const el = document.getElementById('dosen_id');
                 if (el) el.value = this.selectedId;
             },
@@ -610,6 +812,7 @@
                 this.selectedId = '';
                 this.isOpen = false;
                 this.search = '';
+                this.showCustomForm = false;
                 const el = document.getElementById('dosen_id');
                 if (el) el.value = '';
             },
@@ -628,6 +831,19 @@
             selected: initialValue ? initialValue.split(',').map(s => s.trim()).filter(s => s.length > 0) : [],
             search: '',
             isOpen: false,
+            newDosenKode: '',
+            newDosenNama: '',
+            showCustomForm: false,
+            isSubmitting: false,
+            errorMessage: '',
+
+            init() {
+                window.addEventListener('dosen-added', (e) => {
+                    if (e.detail && !this.dosenList.some(d => d.kode === e.detail.kode)) {
+                        this.dosenList.push(e.detail);
+                    }
+                });
+            },
 
             get availableDosens() {
                 let list = this.dosenList.filter(d => !this.selected.includes(d.kode));
@@ -641,10 +857,89 @@
                 );
             },
 
+            onSearchChange() {
+                const raw = this.search.trim();
+                if (raw) {
+                    this.newDosenNama = raw;
+                    this.newDosenKode = this.suggestKode(raw);
+                }
+                this.errorMessage = '';
+            },
+
+            openCustomForm() {
+                this.newDosenNama = this.search.trim();
+                this.newDosenKode = this.suggestKode(this.newDosenNama);
+                this.showCustomForm = true;
+                this.errorMessage = '';
+            },
+
+            suggestKode(name) {
+                const clean = (name || '').replace(/\b(dr|drg|prof|ir|sp|subsp|m\.kes|m\.ked|m\.sc|ph\.d|s\.ked|m\.biomed|aiv|k)\b/gi, '')
+                                  .replace(/[^a-zA-Z\s]/g, '')
+                                  .trim();
+                const words = clean.split(/\s+/).filter(Boolean);
+                let code = '';
+                if (words.length >= 3) {
+                    code = words[0][0] + words[1][0] + words[2][0];
+                } else if (words.length === 2) {
+                    code = words[0].substring(0, 2) + words[1][0];
+                } else if (words.length === 1) {
+                    code = words[0].substring(0, 3);
+                } else {
+                    code = (name || '').replace(/[^a-zA-Z]/g, '').substring(0, 3);
+                }
+                return (code || 'DL').toUpperCase();
+            },
+
+            async saveNewDosen() {
+                if (!this.newDosenNama.trim()) {
+                    this.errorMessage = 'Nama dosen tidak boleh kosong.';
+                    return;
+                }
+                this.isSubmitting = true;
+                this.errorMessage = '';
+
+                try {
+                    const res = await fetch('{{ route("admin.dosens.quick-store") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            nama: this.newDosenNama.trim(),
+                            kode: this.newDosenKode.trim()
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        this.errorMessage = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : 'Gagal menambahkan dosen.');
+                        this.isSubmitting = false;
+                        return;
+                    }
+
+                    const newDosen = data.dosen;
+                    this.dosenList.push(newDosen);
+                    this.addDosen(newDosen.kode);
+                    this.showCustomForm = false;
+                    this.isSubmitting = false;
+
+                    // Beritahu komponen lain (seperti select dosen utama)
+                    window.dispatchEvent(new CustomEvent('dosen-added', { detail: newDosen }));
+                } catch (err) {
+                    this.errorMessage = 'Terjadi kesalahan koneksi.';
+                    this.isSubmitting = false;
+                }
+            },
+
             toggle() {
                 this.isOpen = !this.isOpen;
                 if (this.isOpen) {
                     this.search = '';
+                    this.showCustomForm = false;
+                    this.errorMessage = '';
                     this.$nextTick(() => {
                         if (this.$refs.pendampingSearchInput) {
                             this.$refs.pendampingSearchInput.focus();
@@ -657,6 +952,7 @@
                 if (kode && !this.selected.includes(kode)) {
                     this.selected.push(kode);
                     this.search = '';
+                    this.showCustomForm = false;
                 }
                 this.isOpen = false;
             },

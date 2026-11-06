@@ -70,6 +70,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('moduls', ModulController::class);
 
         // Data Dosen
+        Route::post('dosens/quick-store', [DosenController::class, 'quickStore'])->name('dosens.quick-store');
         Route::post('dosens/bulk-delete', [DosenController::class, 'bulkDelete'])->name('dosens.bulk-delete');
         Route::resource('dosens', DosenController::class);
     });

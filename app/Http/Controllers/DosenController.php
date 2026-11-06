@@ -130,5 +130,82 @@ class DosenController extends Controller
 
         return back()->with('success', "Sebanyak {$count} data dosen berhasil dihapus sekaligus.");
     }
+
+    /**
+     * Daftarkan dosen luar / tidak tetap secara cepat via AJAX dari formulir jadwal perkuliahan.
+     */
+    public function quickStore(Request $request)
+    {
+        $validated = $request->validate([
+            'nama' => ['required', 'string', 'max:255'],
+            'kode' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $nama = trim($validated['nama']);
+        $kode = !empty($validated['kode']) ? strtoupper(trim($validated['kode'])) : null;
+
+        if (!$kode) {
+            $kode = $this->generateUniqueKode($nama);
+        } else {
+            if (Dosen::where('kode', $kode)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Inisial / Kode Dosen '{$kode}' sudah digunakan oleh dosen lain. Silakan ubah inisialnya.",
+                ], 422);
+            }
+        }
+
+        $dosen = Dosen::create([
+            'kode' => $kode,
+            'nama' => $nama,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Dosen luar '{$nama}' [{$kode}] berhasil didaftarkan.",
+            'dosen' => [
+                'id' => $dosen->id,
+                'kode' => $dosen->kode,
+                'nama' => $dosen->nama,
+            ],
+        ]);
+    }
+
+    /**
+     * Generate inisial unik dari nama dosen luar (misal: "dr. Bambang Wijaya" -> "BW" atau "BMW").
+     */
+    protected function generateUniqueKode(string $nama): string
+    {
+        // Bersihkan gelar kedokteran dan akademis umum
+        $clean = preg_replace('/\b(dr|drg|prof|ir|sp|subsp|m\.kes|m\.ked|m\.sc|ph\.d|s\.ked|m\.biomed|aiv|k)\b/i', '', $nama);
+        $clean = preg_replace('/[^a-zA-Z\s]/', '', $clean);
+        $words = array_values(array_filter(explode(' ', trim($clean))));
+
+        $candidate = '';
+        if (count($words) >= 3) {
+            $candidate = substr($words[0], 0, 1) . substr($words[1], 0, 1) . substr($words[2], 0, 1);
+        } elseif (count($words) === 2) {
+            $candidate = substr($words[0], 0, 2) . substr($words[1], 0, 1);
+        } elseif (count($words) === 1) {
+            $candidate = substr($words[0], 0, 3);
+        }
+
+        $candidate = strtoupper($candidate);
+        if (strlen($candidate) < 2) {
+            $candidate = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $nama), 0, 3));
+        }
+        if (strlen($candidate) < 2) {
+            $candidate = 'DL';
+        }
+
+        $baseCandidate = $candidate;
+        $counter = 1;
+        while (Dosen::where('kode', $candidate)->exists()) {
+            $candidate = substr($baseCandidate, 0, 16) . $counter;
+            $counter++;
+        }
+
+        return $candidate;
+    }
 }
 
