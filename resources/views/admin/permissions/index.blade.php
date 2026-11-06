@@ -14,11 +14,13 @@
             <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Izin Akses (Permissions)</h1>
             <p class="text-sm text-slate-500 mt-0.5">Daftar hak akses granular Spatie yang dapat dipasangkan ke dalam peran (roles)</p>
         </div>
+        @can('tambah-izin')
         <a href="{{ route('admin.permissions.create') }}" 
            class="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl text-sm font-semibold shadow-sm transition">
             <i class="bi bi-key-fill"></i>
             <span>Tambah Izin Baru</span>
         </a>
+        @endcan
     </div>
 
     <!-- Kotak Penjelasan Edukatif Bahasa Indonesia -->
@@ -111,12 +113,15 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="inline-flex items-center gap-1.5">
+                                    @can('ubah-izin')
                                     <a href="{{ route('admin.permissions.edit', $permission->id) }}" 
                                        title="Ubah Nama Izin"
                                        class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition">
                                         <i class="bi bi-pencil-square text-base"></i>
                                     </a>
+                                    @endcan
 
+                                    @can('hapus-izin')
                                     <form action="{{ route('admin.permissions.destroy', $permission->id) }}" method="POST"
                                           data-confirm="Apakah Anda yakin ingin menghapus izin akses '{{ addslashes($permission->name) }}'?" class="inline">
                                         @csrf
@@ -126,6 +131,7 @@
                                             <i class="bi bi-trash text-base"></i>
                                         </button>
                                     </form>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

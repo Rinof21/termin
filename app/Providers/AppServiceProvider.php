@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Semester;
 use App\Models\Setting;
 use App\Models\Termin;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
         // Set locale bahasa Indonesia untuk tanggal dan waktu Carbon
         \Carbon\Carbon::setLocale('id');
         app()->setLocale('id');
+
+        // Super Admin secara otomatis memiliki seluruh izin akses Spatie (bypass)
+        Gate::before(function ($user, $ability) {
+            return $user->hasRole('Super Admin') ? true : null;
+        });
 
         // Bagikan variabel semester & termin aktif secara global ke seluruh tampilan Blade
         View::composer('*', function ($view) {

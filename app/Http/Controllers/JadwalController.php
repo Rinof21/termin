@@ -9,9 +9,21 @@ use App\Models\Modul;
 use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class JadwalController extends Controller
+class JadwalController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:lihat-jadwal', only: ['index', 'table', 'matrix', 'events', 'show']),
+            new Middleware('permission:tambah-jadwal', only: ['create', 'store']),
+            new Middleware('permission:ubah-jadwal', only: ['edit', 'update']),
+            new Middleware('permission:hapus-jadwal', only: ['destroy', 'bulkDelete', 'restore', 'forceDelete', 'bulkRestore', 'bulkForceDelete', 'emptyTrash']),
+        ];
+    }
+
     /**
      * Tampilan Kalender FullCalendar.js interaktif.
      */

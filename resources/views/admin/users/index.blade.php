@@ -14,11 +14,13 @@
             <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Data Pengguna</h1>
             <p class="text-sm text-slate-500 mt-0.5">Kelola akun pengguna, data login, serta penetapan peran (role) masing-masing</p>
         </div>
+        @can('tambah-pengguna')
         <a href="{{ route('admin.users.create') }}" 
            class="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl text-sm font-semibold shadow-sm transition">
             <i class="bi bi-person-plus-fill"></i>
             <span>Tambah Pengguna Baru</span>
         </a>
+        @endcan
     </div>
 
     <!-- Toolbar Pencarian & Filter -->
@@ -105,13 +107,16 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="inline-flex items-center gap-1.5">
+                                    @can('ubah-pengguna')
                                     <a href="{{ route('admin.users.edit', $user->id) }}" 
                                        title="Ubah Data Pengguna"
                                        class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition">
                                         <i class="bi bi-pencil-square text-base"></i>
                                     </a>
+                                    @endcan
 
                                     @if($user->id !== Auth::id())
+                                        @can('hapus-pengguna')
                                         <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" 
                                               data-confirm="Apakah Anda yakin ingin menghapus akun pengguna '{{ addslashes($user->name) }}'? Tindakan ini tidak dapat dibatalkan." class="inline">
                                             @csrf
@@ -121,6 +126,7 @@
                                                 <i class="bi bi-trash text-base"></i>
                                             </button>
                                         </form>
+                                        @endcan
                                     @endif
                                 </div>
                             </td>

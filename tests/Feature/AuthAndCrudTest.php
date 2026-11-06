@@ -109,5 +109,37 @@ class AuthAndCrudTest extends TestCase
         $response->assertRedirect('/admin/roles');
         $this->assertDatabaseMissing('roles', ['id' => $role->id]);
     }
+
+    public function test_staf_akademik_cannot_access_access_control_menus_and_routes(): void
+    {
+        // Buat atau ambil user dengan role Staf Akademik
+        $stafUser = User::firstOrCreate(
+            ['email' => 'staf.test@termin.test'],
+            [
+                'name' => 'Staf Pengujian',
+                'password' => bcrypt('password'),
+            ]
+        );
+        $stafRole = Role::firstOrCreate(['name' => 'Staf Akademik', 'guard_name' => 'web']);
+        $stafUser->syncRoles([$stafRole]);
+
+        // 1. Dashboard tidak boleh menampilkan menu Kontrol Hak Akses
+        $response = $this->actingAs($stafUser)->get('/dashboard');
+        $response->assertStatus(200);
+        $response->assertDontSee('Kontrol Hak Akses');
+        $response->assertDontSee('Kelola Peran (Roles)');
+        $response->assertDontSee('Izin Akses (Permissions)');
+
+        // 2. Mengakses langsung URL Kontrol Hak Akses harus ditolak (403 Forbidden)
+        $this->actingAs($stafUser)->get('/admin/roles')->assertStatus(403);
+        $this->actingAs($stafUser)->get('/admin/users')->assertStatus(403);
+        $this->actingAs($stafUser)->get('/admin/permissions')->assertStatus(403);
+
+        // 3. Super Admin tetap dapat mengakses semuanya (200 OK)
+        $admin = User::where('email', 'admin@admin.com')->first();
+        $this->actingAs($admin)->get('/admin/roles')->assertStatus(200);
+        $this->actingAs($admin)->get('/admin/users')->assertStatus(200);
+        $this->actingAs($admin)->get('/admin/permissions')->assertStatus(200);
+    }
 }
 

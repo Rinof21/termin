@@ -4,13 +4,25 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 
-class UserController extends Controller
+class UserController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:lihat-pengguna', only: ['index', 'show']),
+            new Middleware('permission:tambah-pengguna', only: ['create', 'store']),
+            new Middleware('permission:ubah-pengguna', only: ['edit', 'update']),
+            new Middleware('permission:hapus-pengguna', only: ['destroy']),
+        ];
+    }
+
     /**
      * Display a listing of users.
      */

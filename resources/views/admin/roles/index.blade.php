@@ -14,11 +14,13 @@
             <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Peran (Roles)</h1>
             <p class="text-sm text-slate-500 mt-0.5">Kelola kelompok peran otorisasi Spatie serta daftar hak akses (permissions) yang dimiliki</p>
         </div>
+        @can('tambah-peran')
         <a href="{{ route('admin.roles.create') }}" 
            class="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl text-sm font-semibold shadow-sm transition">
             <i class="bi bi-shield-plus"></i>
             <span>Tambah Peran Baru</span>
         </a>
+        @endcan
     </div>
 
     <!-- Kotak Penjelasan Spatie dalam Bahasa Indonesia -->
@@ -70,13 +72,16 @@
 
                 <!-- Footer Aksi -->
                 <div class="px-6 py-3.5 bg-slate-50/70 border-t border-slate-100 rounded-b-2xl flex items-center justify-end gap-2">
+                    @can('ubah-peran')
                     <a href="{{ route('admin.roles.edit', $role->id) }}" 
                        class="px-3 py-1.5 text-xs font-semibold text-brand-700 bg-white border border-slate-200 hover:bg-brand-50 rounded-lg transition inline-flex items-center gap-1.5">
                         <i class="bi bi-pencil-square"></i>
                         <span>Ubah Peran</span>
                     </a>
+                    @endcan
 
                     @if($role->name !== 'Super Admin')
+                        @can('hapus-peran')
                         <form action="{{ route('admin.roles.destroy', $role->id) }}" method="POST"
                               data-confirm="Apakah Anda yakin ingin menghapus peran '{{ addslashes($role->name) }}'? Pastikan peran ini tidak lagi dipakai pengguna." class="inline">
                             @csrf
@@ -87,6 +92,7 @@
                                 <i class="bi bi-trash text-sm"></i>
                             </button>
                         </form>
+                        @endcan
                     @endif
                 </div>
             </div>

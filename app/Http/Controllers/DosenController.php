@@ -4,10 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Dosen;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Validation\Rule;
 
-class DosenController extends Controller
+class DosenController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:lihat-dosen', only: ['index', 'show']),
+            new Middleware('permission:tambah-dosen', only: ['create', 'store', 'quickStore']),
+            new Middleware('permission:ubah-dosen', only: ['edit', 'update']),
+            new Middleware('permission:hapus-dosen', only: ['destroy', 'bulkDelete']),
+        ];
+    }
+
     /**
      * Tampilkan daftar dosen pengampu.
      */

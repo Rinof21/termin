@@ -3,11 +3,23 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 
-class PermissionController extends Controller
+class PermissionController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:lihat-izin', only: ['index', 'show']),
+            new Middleware('permission:tambah-izin', only: ['create', 'store']),
+            new Middleware('permission:ubah-izin', only: ['edit', 'update']),
+            new Middleware('permission:hapus-izin', only: ['destroy']),
+        ];
+    }
+
     /**
      * Display a listing of permissions.
      */

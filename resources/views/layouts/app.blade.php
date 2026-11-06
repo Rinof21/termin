@@ -139,47 +139,59 @@
                         </a>
 
                         <!-- Data Modul -->
+                        @can('lihat-modul')
                         <a href="{{ route('admin.moduls.index') }}" 
                            class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.moduls.*') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             <i class="bi bi-journals text-lg {{ request()->routeIs('admin.moduls.*') ? 'text-brand-600' : 'text-slate-400' }}"></i>
                             <span class="flex-1">Data Modul</span>
                         </a>
+                        @endcan
 
                         <!-- Data Dosen -->
+                        @can('lihat-dosen')
                         <a href="{{ route('admin.dosens.index') }}" 
                            class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.dosens.*') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             <i class="bi bi-person-lines-fill text-lg {{ request()->routeIs('admin.dosens.*') ? 'text-brand-600' : 'text-slate-400' }}"></i>
                             <span class="flex-1">Data Dosen</span>
                         </a>
+                        @endcan
                     </nav>
                 </div>
 
                 <!-- Bagian 3: Manajemen Akses Spatie -->
+                @canany(['lihat-pengguna', 'lihat-peran', 'lihat-izin'])
                 <div>
                     <p class="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Kontrol Hak Akses</p>
                     <nav class="space-y-1">
                         <!-- Pengguna -->
+                        @can('lihat-pengguna')
                         <a href="{{ route('admin.users.index') }}" 
                            class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.users.*') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             <i class="bi bi-people-fill text-lg {{ request()->routeIs('admin.users.*') ? 'text-brand-600' : 'text-slate-400' }}"></i>
                             <span class="flex-1">Data Pengguna</span>
                         </a>
+                        @endcan
 
                         <!-- Peran (Roles) -->
+                        @can('lihat-peran')
                         <a href="{{ route('admin.roles.index') }}" 
                            class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.roles.*') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             <i class="bi bi-person-badge-fill text-lg {{ request()->routeIs('admin.roles.*') ? 'text-brand-600' : 'text-slate-400' }}"></i>
                             <span class="flex-1">Kelola Peran (Roles)</span>
                         </a>
+                        @endcan
 
                         <!-- Izin Akses (Permissions) -->
+                        @can('lihat-izin')
                         <a href="{{ route('admin.permissions.index') }}" 
                            class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.permissions.*') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             <i class="bi bi-key-fill text-lg {{ request()->routeIs('admin.permissions.*') ? 'text-brand-600' : 'text-slate-400' }}"></i>
                             <span class="flex-1">Izin Akses (Permissions)</span>
                         </a>
+                        @endcan
                     </nav>
                 </div>
+                @endcanany
             </div>
 
             <!-- Info Profil Pengguna di Bawah Sidebar -->

@@ -3,12 +3,24 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
-class RoleController extends Controller
+class RoleController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:lihat-peran', only: ['index', 'show']),
+            new Middleware('permission:tambah-peran', only: ['create', 'store']),
+            new Middleware('permission:ubah-peran', only: ['edit', 'update']),
+            new Middleware('permission:hapus-peran', only: ['destroy']),
+        ];
+    }
+
     /**
      * Display a listing of roles.
      */

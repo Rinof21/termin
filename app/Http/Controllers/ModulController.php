@@ -8,10 +8,22 @@ use App\Models\Modul;
 use App\Models\Setting;
 use App\Models\Termin;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Validation\Rule;
 
-class ModulController extends Controller
+class ModulController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:lihat-modul', only: ['index', 'show']),
+            new Middleware('permission:tambah-modul', only: ['create', 'store', 'duplicate']),
+            new Middleware('permission:ubah-modul', only: ['edit', 'update']),
+            new Middleware('permission:hapus-modul', only: ['destroy']),
+        ];
+    }
+
     /**
      * Tampilkan daftar modul pembelajaran kedokteran.
      */
