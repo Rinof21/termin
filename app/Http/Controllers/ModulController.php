@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dosen;
+use App\Models\MataKuliah;
 use App\Models\Modul;
 use App\Models\Setting;
 use App\Models\Termin;
@@ -191,6 +192,64 @@ class ModulController extends Controller
         $label = Setting::formatTahunSemester($kode);
 
         return back()->with('success', "Tahun Semester aktif berhasil diubah menjadi: {$label}. Seluruh modul & jadwal termin disesuaikan.");
+    }
+
+    /**
+     * Duplikat modul beserta seluruh mata kuliah di dalamnya.
+     */
+    public function duplicate(Modul $modul)
+    {
+        // Tentukan kode unik untuk modul hasil duplikasi
+        $baseKode = $modul->kode . '_COPY';
+        $newKode = $baseKode;
+        $counter = 1;
+        while (Modul::where('kode', $newKode)->exists()) {
+            $counter++;
+            $newKode = $baseKode . $counter;
+        }
+
+        // Tentukan nama untuk modul baru
+        $newNama = $modul->nama . ' (Salinan)';
+
+        // Buat modul baru
+        $newModul = Modul::create([
+            'kode' => $newKode,
+            'nama' => $newNama,
+            'semester' => $modul->semester,
+            'tipe_semester' => $modul->tipe_semester,
+            'tahun_semester' => $modul->tahun_semester,
+            'termin' => $modul->termin,
+            'termin_id' => $modul->termin_id,
+            'warna' => $modul->warna,
+            'koordinator_id' => $modul->koordinator_id,
+            'keterangan' => $modul->keterangan,
+        ]);
+
+        // Duplikat semua mata kuliah yang ada di modul sumber
+        $copiedCount = 0;
+        foreach ($modul->mataKuliahs as $mk) {
+            MataKuliah::create([
+                'modul_id' => $newModul->id,
+                'kode' => $newModul->kode,
+                'nama' => $mk->nama,
+                'tipe_kegiatan' => $mk->tipe_kegiatan,
+                'dosen_id' => $mk->dosen_id,
+                'dosen_pendamping' => $mk->dosen_pendamping,
+                'beban_jam' => $mk->beban_jam,
+                'ruangan' => $mk->ruangan,
+                'deskripsi' => $mk->deskripsi,
+            ]);
+            $copiedCount++;
+        }
+
+        $msg = "Modul '{$newModul->nama}' berhasil diduplikat [Kode: {$newModul->kode}]";
+        if ($copiedCount > 0) {
+            $msg .= " beserta {$copiedCount} materi mata kuliah.";
+        } else {
+            $msg .= ".";
+        }
+
+        return redirect()->route('admin.moduls.index')->with('success', $msg);
     }
 
     /**

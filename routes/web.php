@@ -61,6 +61,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('termins', TerminController::class);
 
         // Data Modul & Mata Kuliah di dalam Modul
+        Route::post('moduls/{modul}/duplicate', [ModulController::class, 'duplicate'])->name('moduls.duplicate');
+        Route::post('moduls/{modul}/mata-kuliahs/{mata_kuliah}/duplicate', [MataKuliahController::class, 'duplicate'])->name('moduls.mata-kuliahs.duplicate');
         Route::post('moduls/{modul}/mata-kuliahs/bulk-delete', [MataKuliahController::class, 'bulkDelete'])->name('moduls.mata-kuliahs.bulk-delete');
         Route::resource('moduls.mata-kuliahs', MataKuliahController::class);
         Route::resource('moduls', ModulController::class);

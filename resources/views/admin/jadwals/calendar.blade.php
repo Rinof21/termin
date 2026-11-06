@@ -354,7 +354,7 @@
                 <!-- Tombol Tindakan Cepat (Ubah & Hapus) -->
                 <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
                     <form :action="'{{ url('/admin/jadwals') }}/' + activeEvent.id" method="POST"
-                          onsubmit="return confirm('Apakah Anda yakin ingin menghapus jadwal kuliah ini dari sistem?');">
+                          data-confirm="Apakah Anda yakin ingin menghapus jadwal kuliah ini dari sistem?">
                         @csrf
                         @method('DELETE')
                         <button type="submit" 

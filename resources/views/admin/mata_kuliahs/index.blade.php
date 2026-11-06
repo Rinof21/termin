@@ -261,6 +261,18 @@
                             <!-- Tindakan -->
                             <td class="px-5 py-4 text-right whitespace-nowrap">
                                 <div class="inline-flex items-center gap-1">
+                                    <!-- Duplikat Mata Kuliah -->
+                                    <form action="{{ route('admin.moduls.mata-kuliahs.duplicate', [$modul->id, $mk->id]) }}" method="POST"
+                                          data-confirm="Duplikat mata kuliah '{{ addslashes($mk->nama) }}'?"
+                                          data-confirm-title="Duplikat Mata Kuliah"
+                                          class="inline">
+                                        @csrf
+                                        <button type="submit" title="Duplikat Mata Kuliah"
+                                                class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                                            <i class="bi bi-copy text-base"></i>
+                                        </button>
+                                    </form>
+
                                     <a href="{{ route('admin.moduls.mata-kuliahs.edit', [$modul->id, $mk->id]) }}" 
                                        title="Ubah Mata Kuliah"
                                        class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition">
@@ -268,7 +280,7 @@
                                     </a>
 
                                     <form action="{{ route('admin.moduls.mata-kuliahs.destroy', [$modul->id, $mk->id]) }}" method="POST"
-                                          onsubmit="return confirm('Apakah Anda yakin ingin menghapus mata kuliah {{ $mk->nama }}?');" class="inline">
+                                          data-confirm="Apakah Anda yakin ingin menghapus mata kuliah '{{ addslashes($mk->nama) }}'?" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" title="Hapus Mata Kuliah"
@@ -330,16 +342,20 @@
                 }
             },
             confirmBulkDelete(event) {
+                event.preventDefault();
                 if (this.selectedIds.length === 0) {
-                    alert('Silakan pilih setidaknya satu mata kuliah untuk dihapus.');
-                    event.preventDefault();
+                    swalAlert('Pilih Mata Kuliah', 'Silakan pilih setidaknya satu mata kuliah untuk dihapus.', 'info');
                     return false;
                 }
-                if (!confirm(`Apakah Anda yakin ingin menghapus ${this.selectedIds.length} mata kuliah terpilih? Tindakan ini tidak dapat dibatalkan.`)) {
-                    event.preventDefault();
-                    return false;
-                }
-                return true;
+                const form = event.target;
+                swalConfirm(
+                    'Konfirmasi Hapus Massal',
+                    `Apakah Anda yakin ingin menghapus ${this.selectedIds.length} mata kuliah terpilih? Tindakan ini tidak dapat dibatalkan.`,
+                    () => {
+                        form.submit();
+                    }
+                );
+                return false;
             }
         }
     }

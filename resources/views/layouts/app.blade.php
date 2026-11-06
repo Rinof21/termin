@@ -14,6 +14,9 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 
@@ -400,5 +403,150 @@
         </div>
     </div>
     @stack('scripts')
+
+    <!-- SweetAlert2 Notifikasi Global & Konfirmasi Aksi -->
+    <script>
+        // Global SweetAlert Toast mixin
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3500,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            }
+        });
+
+        // Helper fungsi global konfirmasi & alert SweetAlert2
+        window.swalConfirm = function(title, text, confirmCallback, options = {}) {
+            Swal.fire({
+                title: title || 'Konfirmasi',
+                text: text || 'Apakah Anda yakin ingin melanjutkan tindakan ini?',
+                icon: options.icon || 'warning',
+                showCancelButton: true,
+                confirmButtonColor: options.confirmColor || '#e11d48',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: options.confirmText || 'Ya, Lanjutkan!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                customClass: {
+                    popup: 'rounded-2xl font-sans shadow-xl',
+                    confirmButton: 'rounded-xl px-4 py-2.5 text-sm font-semibold',
+                    cancelButton: 'rounded-xl px-4 py-2.5 text-sm font-semibold'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    confirmCallback();
+                }
+            });
+        };
+
+        window.swalAlert = function(title, text, icon = 'info') {
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: icon,
+                confirmButtonColor: '#4f46e5',
+                confirmButtonText: 'OK',
+                customClass: {
+                    popup: 'rounded-2xl font-sans shadow-xl',
+                    confirmButton: 'rounded-xl px-5 py-2.5 text-sm font-semibold'
+                }
+            });
+        };
+
+        // Trigger Notifikasi Flash saat Halaman Dimuat
+        document.addEventListener('DOMContentLoaded', function () {
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: @json(session('success')),
+                    timer: 3000,
+                    timerProgressBar: true,
+                    confirmButtonColor: '#4f46e5',
+                    confirmButtonText: 'OK',
+                    customClass: {
+                        popup: 'rounded-2xl font-sans shadow-xl',
+                        confirmButton: 'rounded-xl px-5 py-2.5 text-sm font-semibold'
+                    }
+                });
+            @endif
+
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Peringatan / Gagal',
+                    text: @json(session('error')),
+                    confirmButtonColor: '#4f46e5',
+                    confirmButtonText: 'Tutup',
+                    customClass: {
+                        popup: 'rounded-2xl font-sans shadow-xl',
+                        confirmButton: 'rounded-xl px-5 py-2.5 text-sm font-semibold'
+                    }
+                });
+            @endif
+
+            @if ($errors->any())
+                let errorHtml = '<div class="text-left mt-2"><p class="text-xs font-semibold text-slate-700 mb-2">Mohon periksa data formulir berikut:</p><ul class="list-disc list-inside text-xs text-rose-600 space-y-1">';
+                @foreach ($errors->all() as $error)
+                    errorHtml += '<li>' + @json($error) + '</li>';
+                @endforeach
+                errorHtml += '</ul></div>';
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Periksa Isian Formulir',
+                    html: errorHtml,
+                    confirmButtonColor: '#4f46e5',
+                    confirmButtonText: 'Perbaiki',
+                    customClass: {
+                        popup: 'rounded-2xl font-sans shadow-xl',
+                        confirmButton: 'rounded-xl px-5 py-2.5 text-sm font-semibold'
+                    }
+                });
+            @endif
+        });
+
+        // Global Form Submission Interceptor untuk konfirmasi hapus / submit
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            const isDelete = form.querySelector('input[name="_method"][value="DELETE"]') !== null;
+            const hasDataConfirm = form.hasAttribute('data-confirm');
+
+            if ((isDelete || hasDataConfirm) && !form.dataset.swalConfirmed) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                const message = form.getAttribute('data-confirm') || 'Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.';
+                const title = form.getAttribute('data-confirm-title') || 'Konfirmasi Hapus';
+
+                Swal.fire({
+                    title: title,
+                    text: message,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#e11d48',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Ya, Lanjutkan!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    customClass: {
+                        popup: 'rounded-2xl font-sans shadow-xl',
+                        confirmButton: 'rounded-xl px-4 py-2.5 text-sm font-semibold',
+                        cancelButton: 'rounded-xl px-4 py-2.5 text-sm font-semibold'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                });
+                return false;
+            }
+        }, true);
+    </script>
 </body>
 </html>

@@ -268,7 +268,7 @@
                                     </a>
 
                                     <form action="{{ route('admin.jadwals.destroy', $jadwal->id) }}" method="POST"
-                                          onsubmit="return confirm('Apakah Anda yakin ingin menghapus jadwal ini?');" class="inline">
+                                          data-confirm="Apakah Anda yakin ingin menghapus jadwal '{{ addslashes($jadwal->nama_kuliah) }}'?" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" title="Hapus Jadwal"
@@ -325,16 +325,20 @@
                 }
             },
             confirmBulkDelete(event) {
+                event.preventDefault();
                 if (this.selectedIds.length === 0) {
-                    alert('Silakan pilih setidaknya satu jadwal kuliah untuk dihapus.');
-                    event.preventDefault();
+                    swalAlert('Pilih Jadwal', 'Silakan pilih setidaknya satu jadwal kuliah untuk dihapus.', 'info');
                     return false;
                 }
-                if (!confirm(`Apakah Anda yakin ingin menghapus ${this.selectedIds.length} jadwal kuliah yang dipilih? Tindakan ini tidak dapat dibatalkan.`)) {
-                    event.preventDefault();
-                    return false;
-                }
-                return true;
+                const form = event.target;
+                swalConfirm(
+                    'Konfirmasi Hapus Massal',
+                    `Apakah Anda yakin ingin menghapus ${this.selectedIds.length} jadwal kuliah yang dipilih? Tindakan ini tidak dapat dibatalkan.`,
+                    () => {
+                        form.submit();
+                    }
+                );
+                return false;
             }
         }
     }

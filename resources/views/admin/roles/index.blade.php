@@ -78,7 +78,7 @@
 
                     @if($role->name !== 'Super Admin')
                         <form action="{{ route('admin.roles.destroy', $role->id) }}" method="POST"
-                              onsubmit="return confirm('Apakah Anda yakin ingin menghapus peran {{ $role->name }}? Pastikan peran ini tidak lagi dipakai pengguna.');" class="inline">
+                              data-confirm="Apakah Anda yakin ingin menghapus peran '{{ addslashes($role->name) }}'? Pastikan peran ini tidak lagi dipakai pengguna." class="inline">
                             @csrf
                             @method('DELETE')
                             <button type="submit" 

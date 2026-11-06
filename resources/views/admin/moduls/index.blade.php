@@ -41,11 +41,11 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <form action="{{ route('admin.settings.semester') }}" method="POST">
+            <form action="{{ route('admin.settings.semester') }}" method="POST"
+                  data-confirm="Apakah Anda yakin ingin mengalihkan semester aktif ke Semester {{ $activeSemester === 'Ganjil' ? 'Genap' : 'Ganjil' }}? Tampilan jadwal dan modul akan otomatis disesuaikan.">
                 @csrf
                 <input type="hidden" name="semester" value="{{ $activeSemester === 'Ganjil' ? 'Genap' : 'Ganjil' }}">
                 <button type="submit" 
-                        onclick="return confirm('Apakah Anda yakin ingin mengalihkan semester aktif ke Semester {{ $activeSemester === 'Ganjil' ? 'Genap' : 'Ganjil' }}? Tampilan jadwal dan modul akan otomatis disesuaikan.');"
                         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs transition {{ $activeSemester === 'Ganjil' ? 'bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 hover:border-emerald-400' : 'bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-300 hover:border-indigo-400' }}">
                     <i class="bi bi-arrow-repeat text-sm"></i>
                     <span>Aktifkan Semester {{ $activeSemester === 'Ganjil' ? 'Genap' : 'Ganjil' }}</span>
@@ -216,6 +216,19 @@
                         </a>
 
                         <div class="flex items-center gap-1">
+                            <!-- Tombol Duplikat Modul -->
+                            <form action="{{ route('admin.moduls.duplicate', $modul->id) }}" method="POST"
+                                  data-confirm="Duplikat modul '{{ addslashes($modul->nama) }}' beserta seluruh materi mata kuliah di dalamnya?"
+                                  data-confirm-title="Duplikat Modul"
+                                  class="inline">
+                                @csrf
+                                <button type="submit" 
+                                        class="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition"
+                                        title="Duplikat Modul (Salin Modul & Mata Kuliah)">
+                                    <i class="bi bi-copy"></i>
+                                </button>
+                            </form>
+
                             <a href="{{ route('admin.moduls.edit', $modul->id) }}" 
                                class="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-slate-100 transition"
                                title="Ubah Modul">
@@ -223,7 +236,7 @@
                             </a>
 
                             <form action="{{ route('admin.moduls.destroy', $modul->id) }}" method="POST"
-                                  onsubmit="return confirm('Apakah Anda yakin ingin menghapus modul {{ $modul->nama }}?');" class="inline">
+                                  data-confirm="Apakah Anda yakin ingin menghapus modul '{{ addslashes($modul->nama) }}'?" class="inline">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" 

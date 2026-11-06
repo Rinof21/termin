@@ -175,7 +175,7 @@
                                     </a>
 
                                     <form action="{{ route('admin.dosens.destroy', $dosen->id) }}" method="POST"
-                                          onsubmit="return confirm('Apakah Anda yakin ingin menghapus data dosen {{ $dosen->nama }}?');" class="inline">
+                                          data-confirm="Apakah Anda yakin ingin menghapus data dosen '{{ addslashes($dosen->nama) }}'?" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" title="Hapus Dosen"
@@ -231,16 +231,20 @@
                 }
             },
             confirmBulkDelete(event) {
+                event.preventDefault();
                 if (this.selectedIds.length === 0) {
-                    alert('Silakan pilih setidaknya satu dosen untuk dihapus.');
-                    event.preventDefault();
+                    swalAlert('Pilih Dosen', 'Silakan pilih setidaknya satu dosen untuk dihapus.', 'info');
                     return false;
                 }
-                if (!confirm(`Apakah Anda yakin ingin menghapus ${this.selectedIds.length} data dosen yang dipilih? Tindakan ini tidak dapat dibatalkan.`)) {
-                    event.preventDefault();
-                    return false;
-                }
-                return true;
+                const form = event.target;
+                swalConfirm(
+                    'Konfirmasi Hapus Massal',
+                    `Apakah Anda yakin ingin menghapus ${this.selectedIds.length} data dosen yang dipilih? Tindakan ini tidak dapat dibatalkan.`,
+                    () => {
+                        form.submit();
+                    }
+                );
+                return false;
             }
         }
     }

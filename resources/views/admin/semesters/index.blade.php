@@ -243,10 +243,11 @@
                                         Aktif
                                     </span>
                                 @else
-                                    <form action="{{ route('admin.semesters.activate', $semester) }}" method="POST" class="inline-block">
+                                    <form action="{{ route('admin.semesters.activate', $semester) }}" method="POST" class="inline-block"
+                                          data-confirm="Aktifkan {{ $semester->kode }} ({{ $semester->nama }}) sebagai semester akademik saat ini?"
+                                          data-confirm-title="Aktifkan Semester">
                                         @csrf
                                         <button type="submit" 
-                                                onclick="return confirm('Aktifkan {{ $semester->kode }} ({{ $semester->nama }}) sebagai semester akademik saat ini?')"
                                                 class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 hover:border-brand-200 transition">
                                             Aktifkan
                                         </button>
@@ -265,7 +266,7 @@
 
                                     @if(!$isCurrentActive)
                                         <form action="{{ route('admin.semesters.destroy', $semester) }}" method="POST" class="inline" 
-                                              onsubmit="return confirm('Apakah Anda yakin ingin menghapus data Semester {{ $semester->kode }}?')">
+                                              data-confirm="Apakah Anda yakin ingin menghapus data Semester {{ $semester->kode }}?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus Semester">
@@ -326,17 +327,21 @@
             },
 
             confirmBulkDelete(event) {
+                event.preventDefault();
                 if (this.selectedIds.length === 0) {
-                    event.preventDefault();
-                    alert('Pilih setidaknya satu semester yang akan dihapus.');
+                    swalAlert('Pilih Semester', 'Pilih setidaknya satu semester yang akan dihapus.', 'info');
                     return false;
                 }
                 const count = this.selectedIds.length;
-                if (!confirm(`Apakah Anda yakin ingin menghapus ${count} semester yang dipilih? (Semester yang sedang aktif tidak akan terhapus).`)) {
-                    event.preventDefault();
-                    return false;
-                }
-                return true;
+                const form = event.target;
+                swalConfirm(
+                    'Konfirmasi Hapus Massal',
+                    `Apakah Anda yakin ingin menghapus ${count} semester yang dipilih? (Semester yang sedang aktif tidak akan terhapus).`,
+                    () => {
+                        form.submit();
+                    }
+                );
+                return false;
             }
         };
     }

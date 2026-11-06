@@ -498,5 +498,62 @@ class KedokteranScheduleTest extends TestCase
         $dosen1->delete();
         $dosen2->delete();
     }
+
+    public function test_modul_and_mata_kuliah_duplicate(): void
+    {
+        $admin = User::where('email', 'admin@admin.com')->first();
+        
+        // 1. Buat modul sumber
+        $modul = Modul::create([
+            'kode' => 'ORGDUP',
+            'nama' => 'Modul Asli Uji Duplikasi',
+            'semester' => 'Semester Genap 2026/2027',
+            'tipe_semester' => 'Genap',
+            'warna' => '#10b981',
+        ]);
+
+        // Buat materi mata kuliah di bawah modul sumber
+        $mk = MataKuliah::create([
+            'modul_id' => $modul->id,
+            'kode' => 'ORGDUP',
+            'nama' => 'Mata Kuliah Uji Duplikat',
+            'tipe_kegiatan' => 'Kuliah',
+        ]);
+
+        // 2. Duplikasi Modul
+        $response = $this->actingAs($admin)->post("/admin/moduls/{$modul->id}/duplicate");
+        $response->assertRedirect('/admin/moduls');
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('moduls', [
+            'nama' => 'Modul Asli Uji Duplikasi (Salinan)',
+            'kode' => 'ORGDUP_COPY',
+        ]);
+
+        $duplicatedModul = Modul::where('kode', 'ORGDUP_COPY')->first();
+        $this->assertNotNull($duplicatedModul);
+
+        // Pastikan mata kuliah di dalamnya ikut terduplikasi
+        $this->assertDatabaseHas('mata_kuliahs', [
+            'modul_id' => $duplicatedModul->id,
+            'nama' => 'Mata Kuliah Uji Duplikat',
+        ]);
+
+        // 3. Duplikasi Mata Kuliah mandiri
+        $responseMk = $this->actingAs($admin)->post("/admin/moduls/{$modul->id}/mata-kuliahs/{$mk->id}/duplicate");
+        $responseMk->assertRedirect("/admin/moduls/{$modul->id}/mata-kuliahs");
+        $responseMk->assertSessionHas('success');
+
+        $this->assertDatabaseHas('mata_kuliahs', [
+            'modul_id' => $modul->id,
+            'nama' => 'Mata Kuliah Uji Duplikat (Salinan)',
+        ]);
+
+        // Bersihkan data
+        $duplicatedModul->mataKuliahs()->delete();
+        $duplicatedModul->delete();
+        $modul->mataKuliahs()->delete();
+        $modul->delete();
+    }
 }
 

@@ -113,7 +113,7 @@
 
                                     @if($user->id !== Auth::id())
                                         <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" 
-                                              onsubmit="return confirm('Apakah Anda yakin ingin menghapus akun pengguna {{ $user->name }}? Tindakan ini tidak dapat dibatalkan.');" class="inline">
+                                              data-confirm="Apakah Anda yakin ingin menghapus akun pengguna '{{ addslashes($user->name) }}'? Tindakan ini tidak dapat dibatalkan." class="inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" title="Hapus Pengguna" 

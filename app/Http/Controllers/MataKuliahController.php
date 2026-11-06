@@ -139,6 +139,19 @@ class MataKuliahController extends Controller
     }
 
     /**
+     * Duplikat satu mata kuliah di dalam modul.
+     */
+    public function duplicate(Modul $modul, MataKuliah $mataKuliah)
+    {
+        $newMk = $mataKuliah->replicate();
+        $newMk->nama = $mataKuliah->nama . ' (Salinan)';
+        $newMk->save();
+
+        return redirect()->route('admin.moduls.mata-kuliahs.index', $modul->id)
+            ->with('success', "Mata kuliah '{$newMk->nama}' berhasil diduplikat.");
+    }
+
+    /**
      * Hapus data mata kuliah.
      */
     public function destroy(Modul $modul, MataKuliah $mataKuliah)

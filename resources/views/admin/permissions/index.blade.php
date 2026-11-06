@@ -118,7 +118,7 @@
                                     </a>
 
                                     <form action="{{ route('admin.permissions.destroy', $permission->id) }}" method="POST"
-                                          onsubmit="return confirm('Apakah Anda yakin ingin menghapus izin akses {{ $permission->name }}?');" class="inline">
+                                          data-confirm="Apakah Anda yakin ingin menghapus izin akses '{{ addslashes($permission->name) }}'?" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" title="Hapus Izin"
