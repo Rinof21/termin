@@ -732,6 +732,16 @@ class KedokteranScheduleTest extends TestCase
                 ]
             ]
         ]);
+
+        // 4. Verifikasi pencarian & filter berdasarkan dosen pengampu (meskipun bukan pengampu utama)
+        $dosenPendamping = Dosen::where('kode', 'QRY')->first();
+        if ($dosenPendamping) {
+            $resDosen = $this->get('/api/public-events?semester=Ganjil&dosen_id=' . $dosenPendamping->id);
+            $resDosen->assertStatus(200);
+            $eventsDosen = $resDosen->json();
+            $this->assertNotEmpty($eventsDosen);
+            $this->assertEquals('KP. Wawancara Psikiatri', $eventsDosen[0]['extendedProps']['nama_kuliah']);
+        }
     }
 }
 

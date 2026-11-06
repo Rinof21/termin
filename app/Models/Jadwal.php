@@ -90,5 +90,38 @@ class Jadwal extends Model
 
         return $result;
     }
+
+    /**
+     * Scope untuk menyaring jadwal berdasarkan dosen (baik sebagai Dosen Utama maupun Dosen Pengampu Pendamping).
+     */
+    public function scopeForDosen($query, $dosenId)
+    {
+        if (empty($dosenId)) {
+            return $query;
+        }
+
+        $dosen = is_numeric($dosenId) ? Dosen::find($dosenId) : Dosen::where('kode', $dosenId)->first();
+
+        return $query->where(function ($q) use ($dosen, $dosenId) {
+            if ($dosen) {
+                $kode = trim($dosen->kode);
+                $q->where('dosen_id', $dosen->id)
+                  ->orWhere('dosen_pendamping', $kode)
+                  ->orWhere('dosen_pendamping', 'like', "{$kode},%")
+                  ->orWhere('dosen_pendamping', 'like', "%, {$kode},%")
+                  ->orWhere('dosen_pendamping', 'like', "%,{$kode},%")
+                  ->orWhere('dosen_pendamping', 'like', "%, {$kode}")
+                  ->orWhere('dosen_pendamping', 'like', "%,{$kode}")
+                  ->orWhere('dosen_pendamping', 'like', "%{$kode}%");
+
+                if (!empty($dosen->nama)) {
+                    $q->orWhere('dosen_pendamping', 'like', "%{$dosen->nama}%");
+                }
+            } else {
+                $q->where('dosen_id', $dosenId)
+                  ->orWhere('dosen_pendamping', 'like', "%{$dosenId}%");
+            }
+        });
+    }
 }
 

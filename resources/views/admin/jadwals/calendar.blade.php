@@ -95,6 +95,13 @@
         color: #ffffff !important;
         font-weight: 600 !important;
     }
+    .fc-daygrid-event-harness-hidden {
+        display: none !important;
+    }
+    .fc-daygrid-day-bottom {
+        margin-top: 2px !important;
+        padding-bottom: 2px !important;
+    }
     .fc-more-link {
         font-size: 0.725rem !important;
         font-weight: 700 !important;
@@ -187,7 +194,7 @@
 
             <!-- Kontainer Kalender FullCalendar -->
             <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
-                <div id="calendar" class="min-h-[680px]"></div>
+                <div id="calendar"></div>
             </div>
         </div>
 
@@ -503,6 +510,8 @@
                     locale: 'id',
                     initialView: 'dayGridMonth',
                     initialDate: '{{ $activeTermin ? $activeTermin->tanggal_mulai->format("Y-m-d") : "2026-11-02" }}',
+                    height: 'auto',
+                    expandRows: false,
                     headerToolbar: {
                         left: 'prev,next today',
                         center: 'title',

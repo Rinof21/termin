@@ -73,14 +73,18 @@ class JadwalController extends Controller
                     $q->where('nama_kuliah', 'like', "%{$search}%")
                       ->orWhere('ruangan', 'like', "%{$search}%")
                       ->orWhere('kelompok', 'like', "%{$search}%")
-                      ->orWhere('dosen_pendamping', 'like', "%{$search}%");
+                      ->orWhere('dosen_pendamping', 'like', "%{$search}%")
+                      ->orWhereHas('dosen', function ($dq) use ($search) {
+                          $dq->where('nama', 'like', "%{$search}%")
+                             ->orWhere('kode', 'like', "%{$search}%");
+                      });
                 });
             })
             ->when($modulId, function ($query, $modulId) {
                 return $query->where('modul_id', $modulId);
             })
             ->when($dosenId, function ($query, $dosenId) {
-                return $query->where('dosen_id', $dosenId);
+                return $query->forDosen($dosenId);
             })
             ->when($tanggal, function ($query, $tanggal) {
                 return $query->whereDate('tanggal', $tanggal);
@@ -451,7 +455,7 @@ class JadwalController extends Controller
                 return $query->where('modul_id', $modulId);
             })
             ->when($dosenId, function ($query, $dosenId) {
-                return $query->where('dosen_id', $dosenId);
+                return $query->forDosen($dosenId);
             })
             ->when($kelompok, function ($query, $kelompok) {
                 return $query->where('kelompok', $kelompok);

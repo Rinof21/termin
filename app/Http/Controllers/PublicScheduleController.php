@@ -378,7 +378,7 @@ class PublicScheduleController extends Controller
                 return $query->where('modul_id', $modulId);
             })
             ->when($dosenId, function ($query, $dosenId) {
-                return $query->where('dosen_id', $dosenId);
+                return $query->forDosen($dosenId);
             })
             ->when($kelompok, function ($query, $kelompok) {
                 return $query->where('kelompok', $kelompok);

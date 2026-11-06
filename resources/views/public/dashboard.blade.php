@@ -146,6 +146,13 @@
             border-color: var(--fc-event-border-color, #4f46e5) !important;
             color: #ffffff !important;
         }
+        .fc-daygrid-event-harness-hidden {
+            display: none !important;
+        }
+        .fc-daygrid-day-bottom {
+            margin-top: 2px !important;
+            padding-bottom: 2px !important;
+        }
         .fc-more-link {
             font-size: 0.725rem !important;
             font-weight: 700 !important;
@@ -661,7 +668,7 @@
                 <div x-show="activeView === 'calendar'" x-cloak>
                     <!-- Kalender Card -->
                     <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
-                        <div id="publicCalendar" class="min-h-[650px]"></div>
+                        <div id="publicCalendar"></div>
                     </div>
                 </div>
 
@@ -981,6 +988,8 @@
                         locale: 'id',
                         initialView: 'dayGridMonth',
                         initialDate: '{{ $selectedDate }}',
+                        height: 'auto',
+                        expandRows: false,
                         headerToolbar: {
                             left: 'prev,next today',
                             center: 'title',
