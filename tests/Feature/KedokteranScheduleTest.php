@@ -555,5 +555,29 @@ class KedokteranScheduleTest extends TestCase
         $modul->mataKuliahs()->delete();
         $modul->delete();
     }
+
+    public function test_matrix_page_renders_correctly(): void
+    {
+        $admin = User::where('email', 'admin@admin.com')->first();
+
+        // 1. Tampilan default matriks
+        $response = $this->actingAs($admin)->get('/admin/jadwals/matrix');
+        $response->assertStatus(200);
+        $response->assertSee('Matriks Jadwal Termin S1 Kedokteran');
+        $response->assertSee('07.30 - 08.20');
+        $response->assertSee('ISHOMA');
+        $response->assertSee('Waktu / Sesi');
+
+        // 2. Tampilan dengan filter semester Ganjil, minggu 1, dan hari senin
+        $responseGanjil = $this->actingAs($admin)->get('/admin/jadwals/matrix?semester=Ganjil&minggu=1&hari=senin');
+        $responseGanjil->assertStatus(200);
+        $responseGanjil->assertSee('Semester Ganjil');
+        $responseGanjil->assertSee('Minggu 1');
+        $responseGanjil->assertSee('Senin');
+
+        // 3. Tampilan dengan split_kelompok toggle
+        $responseSplit = $this->actingAs($admin)->get('/admin/jadwals/matrix?semester=Ganjil&split_kelompok=1');
+        $responseSplit->assertStatus(200);
+    }
 }
 

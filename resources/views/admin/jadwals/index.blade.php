@@ -33,6 +33,11 @@
                 <i class="bi bi-calendar3 text-sm"></i>
                 <span>Tampilan Kalender</span>
             </a>
+            <a href="{{ route('admin.jadwals.matrix') }}" 
+               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-semibold shadow-xs transition">
+                <i class="bi bi-grid-3x3 text-sm text-emerald-600"></i>
+                <span>Tampilan Matriks</span>
+            </a>
             <a href="{{ route('admin.jadwals.create') }}" 
                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl text-xs font-semibold shadow-sm transition">
                 <i class="bi bi-calendar-plus text-sm"></i>

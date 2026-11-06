@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function () {
         // Jadwal Termin & Kalender
         Route::get('jadwals', [JadwalController::class, 'index'])->name('jadwals.index');
         Route::get('jadwals/table', [JadwalController::class, 'table'])->name('jadwals.table');
+        Route::get('jadwals/matrix', [JadwalController::class, 'matrix'])->name('jadwals.matrix');
         Route::get('jadwals/events', [JadwalController::class, 'events'])->name('jadwals.events');
         Route::post('jadwals/bulk-delete', [JadwalController::class, 'bulkDelete'])->name('jadwals.bulk-delete');
         Route::resource('jadwals', JadwalController::class)->except(['index']);

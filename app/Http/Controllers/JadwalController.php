@@ -83,6 +83,285 @@ class JadwalController extends Controller
     }
 
     /**
+     * Tampilan Matriks Jadwal Kuliah Spreadsheet (Baris atas Nama Modul / Kelompok).
+     */
+    public function matrix(Request $request)
+    {
+        $activeSemester = Setting::getActiveSemester();
+        $semesterFilter = $request->query('semester', $activeSemester);
+        $terminId = $request->query('termin_id');
+        $mingguNomor = (int) $request->query('minggu', 1);
+        $hariSlug = $request->query('hari', 'senin');
+        $splitKelompok = $request->has('split_kelompok') ? $request->boolean('split_kelompok') : true;
+
+        // Ambil Termin yang sesuai
+        if ($terminId) {
+            $currentTermin = \App\Models\Termin::find($terminId);
+        } else {
+            $currentTermin = \App\Models\Termin::where('tipe_semester', $semesterFilter)
+                ->where('is_aktif', true)
+                ->first()
+                ?: \App\Models\Termin::where('tipe_semester', $semesterFilter)->first();
+        }
+
+        $termins = \App\Models\Termin::where('tipe_semester', $semesterFilter)->orderBy('nomor')->get();
+
+        // Ambil Daftar Minggu
+        $daftarMinggu = $currentTermin ? $currentTermin->daftar_minggu : [];
+        if (empty($daftarMinggu)) {
+            $startFallback = Carbon::now()->startOfWeek(Carbon::MONDAY);
+            for ($i = 1; $i <= 6; $i++) {
+                $ws = (clone $startFallback)->addWeeks($i - 1);
+                $we = (clone $ws)->addDays(5);
+                $daftarMinggu[] = [
+                    'nomor' => $i,
+                    'label' => 'Minggu ' . $i,
+                    'tanggal_mulai' => $ws->format('Y-m-d'),
+                    'tanggal_selesai' => $we->format('Y-m-d'),
+                    'rentang' => $ws->translatedFormat('d M') . ' - ' . $we->translatedFormat('d M Y'),
+                ];
+            }
+        }
+
+        $selectedMinggu = collect($daftarMinggu)->firstWhere('nomor', $mingguNomor) ?: $daftarMinggu[0];
+        $weekStartDate = Carbon::parse($selectedMinggu['tanggal_mulai']);
+
+        // 6 Hari Perkuliahan (Senin s/d Sabtu)
+        $days = [];
+        $dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
+        foreach ($dayNames as $idx => $dName) {
+            $dateObj = (clone $weekStartDate)->addDays($idx);
+            $slug = strtolower(str_replace("'", "", $dName));
+            $days[] = [
+                'index' => $idx,
+                'slug' => $slug,
+                'nama' => $dName,
+                'date' => $dateObj->format('Y-m-d'),
+                'formatted' => $dateObj->translatedFormat('l, d F Y'),
+                'short_date' => $dateObj->translatedFormat('d M'),
+            ];
+        }
+
+        $selectedDay = collect($days)->firstWhere('slug', $hariSlug) ?: $days[0];
+        $selectedDate = $selectedDay['date'];
+
+        // Ambil modul-modul pada semester terpilih
+        $moduls = Modul::where('tipe_semester', $semesterFilter)->orderBy('id')->get();
+
+        // Susun Kolom: Modul & Kelompok (A.1, A.2 jika ada)
+        $columns = [];
+        foreach ($moduls as $m) {
+            if (preg_match('/\([A-Za-z0-9\.\s]+\)$/', $m->nama)) {
+                $columns[] = [
+                    'id' => 'modul_' . $m->id,
+                    'modul_id' => $m->id,
+                    'modul' => $m,
+                    'kelompok' => null,
+                    'nama' => $m->nama,
+                    'kode' => $m->kode,
+                    'warna' => $m->warna ?: '#4f46e5',
+                ];
+                continue;
+            }
+
+            $kelompoksInDb = Jadwal::where('modul_id', $m->id)
+                ->whereNotNull('kelompok')
+                ->whereNotIn('kelompok', ['Semua Kelompok', 'Semua', ''])
+                ->distinct()
+                ->pluck('kelompok')
+                ->all();
+
+            $shouldSplit = false;
+            $groupList = [];
+            if (!empty($kelompoksInDb)) {
+                $shouldSplit = true;
+                $groupList = $kelompoksInDb;
+                if (in_array('A.1', $groupList) && !in_array('A.2', $groupList)) {
+                    $groupList[] = 'A.2';
+                }
+                sort($groupList);
+            } elseif ($splitKelompok && (
+                stripos($m->nama, 'Biomedis') !== false || 
+                stripos($m->nama, 'Etnomedik') !== false ||
+                stripos($m->nama, 'Respirasi') !== false ||
+                stripos($m->nama, 'Kardiovaskular') !== false
+            )) {
+                $shouldSplit = true;
+                $groupList = ['A.1', 'A.2'];
+            }
+
+            if ($shouldSplit && !empty($groupList)) {
+                foreach ($groupList as $grp) {
+                    $columns[] = [
+                        'id' => 'modul_' . $m->id . '_' . preg_replace('/[^a-zA-Z0-9]/', '_', $grp),
+                        'modul_id' => $m->id,
+                        'modul' => $m,
+                        'kelompok' => $grp,
+                        'nama' => $m->nama . ' (' . $grp . ')',
+                        'kode' => $m->kode,
+                        'warna' => $m->warna ?: '#4f46e5',
+                    ];
+                }
+            } else {
+                $columns[] = [
+                    'id' => 'modul_' . $m->id,
+                    'modul_id' => $m->id,
+                    'modul' => $m,
+                    'kelompok' => null,
+                    'nama' => $m->nama,
+                    'kode' => $m->kode,
+                    'warna' => $m->warna ?: '#4f46e5',
+                ];
+            }
+        }
+
+        // 9 Sesi Standar Kurikulum S1 Kedokteran
+        $timeSlots = [
+            ['sesi' => 1, 'mulai' => '07:30', 'selesai' => '08:20', 'label' => '07.30 - 08.20'],
+            ['sesi' => 2, 'mulai' => '08:20', 'selesai' => '09:10', 'label' => '08.20 - 09.10'],
+            ['sesi' => 3, 'mulai' => '09:10', 'selesai' => '10:00', 'label' => '09.10 - 10.00'],
+            ['sesi' => 4, 'mulai' => '10:10', 'selesai' => '11:00', 'label' => '10.10 - 11.00'],
+            ['sesi' => 5, 'mulai' => '11:00', 'selesai' => '11:50', 'label' => '11.00 - 11.50'],
+            ['sesi' => 6, 'mulai' => '13:00', 'selesai' => '13:50', 'label' => '13.00 - 13.50'],
+            ['sesi' => 7, 'mulai' => '13:50', 'selesai' => '14:40', 'label' => '13.50 - 14.40'],
+            ['sesi' => 8, 'mulai' => '14:40', 'selesai' => '15:30', 'label' => '14.40 - 15.30'],
+            ['sesi' => 9, 'mulai' => '15:30', 'selesai' => '16:20', 'label' => '15.30 - 16.20'],
+        ];
+
+        // Ambil Jadwal pada tanggal terpilih
+        $jadwalsOnDate = Jadwal::with(['modul', 'dosen', 'mataKuliah'])
+            ->whereDate('tanggal', $selectedDate)
+            ->get();
+
+        // Pemetaan Grid: $grid[slot_idx][col_idx]
+        $grid = [];
+        $occupied = []; // [slot_idx][col_idx] => true jika sudah di-cover oleh rowspan/colspan sebelumnya
+
+        $numSlots = count($timeSlots);
+        $numCols = count($columns);
+
+        for ($s = 0; $s < $numSlots; $s++) {
+            $slot = $timeSlots[$s];
+            $slotMulai = substr($slot['mulai'], 0, 5);
+            $slotSelesai = substr($slot['selesai'], 0, 5);
+
+            for ($c = 0; $c < $numCols; $c++) {
+                if (isset($occupied[$s][$c])) {
+                    $grid[$s][$c] = [
+                        'type' => 'spanned',
+                    ];
+                    continue;
+                }
+
+                $col = $columns[$c];
+
+                // Cari jadwal yang cocok dengan kolom ini dan slot ini
+                $matchedJadwal = null;
+                foreach ($jadwalsOnDate as $j) {
+                    if ($j->modul_id != $col['modul_id']) {
+                        continue;
+                    }
+
+                    // Cocokkan kelompok
+                    if (!empty($col['kelompok'])) {
+                        $jKelompok = trim($j->kelompok ?? '');
+                        if (!empty($jKelompok) && 
+                            $jKelompok !== 'Semua Kelompok' && 
+                            $jKelompok !== 'Semua' && 
+                            stripos($jKelompok, $col['kelompok']) === false) {
+                            continue;
+                        }
+                    }
+
+                    // Cocokkan waktu (overlap)
+                    $jMulai = substr($j->jam_mulai, 0, 5);
+                    $jSelesai = substr($j->jam_selesai, 0, 5);
+
+                    if ($jMulai < $slotSelesai && $jSelesai > $slotMulai) {
+                        $matchedJadwal = $j;
+                        break;
+                    }
+                }
+
+                if ($matchedJadwal) {
+                    // Hitung rowspan
+                    $rowspan = 1;
+                    $maxSlotIndex = ($s < 5) ? 4 : 8; // Jangan tembus ISHOMA
+                    for ($nextS = $s + 1; $nextS <= $maxSlotIndex; $nextS++) {
+                        $nextSlot = $timeSlots[$nextS];
+                        $nextMulai = substr($nextSlot['mulai'], 0, 5);
+                        $nextSelesai = substr($nextSlot['selesai'], 0, 5);
+
+                        $jMulai = substr($matchedJadwal->jam_mulai, 0, 5);
+                        $jSelesai = substr($matchedJadwal->jam_selesai, 0, 5);
+
+                        if ($jMulai < $nextSelesai && $jSelesai > $nextMulai) {
+                            $rowspan++;
+                            $occupied[$nextS][$c] = true;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    // Cek colspan (jika kolom berikutnya milik modul yang sama dan memiliki jadwal yang sama)
+                    $colspan = 1;
+                    if ($c + 1 < $numCols) {
+                        $nextCol = $columns[$c + 1];
+                        if ($nextCol['modul_id'] == $col['modul_id']) {
+                            $jKelompok = trim($matchedJadwal->kelompok ?? '');
+                            if (empty($jKelompok) || $jKelompok === 'Semua Kelompok' || stripos($jKelompok, '&') !== false) {
+                                $colspan = 2;
+                                $occupied[$s][$c + 1] = true;
+                                for ($k = 1; $k < $rowspan; $k++) {
+                                    $occupied[$s + $k][$c + 1] = true;
+                                }
+                            }
+                        }
+                    }
+
+                    $grid[$s][$c] = [
+                        'type' => 'event',
+                        'jadwal' => $matchedJadwal,
+                        'rowspan' => $rowspan,
+                        'colspan' => $colspan,
+                        'modul' => $col['modul'],
+                    ];
+                } else {
+                    $grid[$s][$c] = [
+                        'type' => 'empty',
+                        'rowspan' => 1,
+                        'colspan' => 1,
+                        'modul' => $col['modul'],
+                        'kelompok' => $col['kelompok'],
+                        'slot' => $slot,
+                    ];
+                }
+            }
+        }
+
+        $dosens = Dosen::orderBy('nama')->get();
+
+        return view('admin.jadwals.matrix', compact(
+            'activeSemester',
+            'semesterFilter',
+            'currentTermin',
+            'termins',
+            'daftarMinggu',
+            'selectedMinggu',
+            'mingguNomor',
+            'days',
+            'selectedDay',
+            'selectedDate',
+            'columns',
+            'timeSlots',
+            'grid',
+            'moduls',
+            'dosens',
+            'splitKelompok'
+        ));
+    }
+
+    /**
      * JSON Endpoint untuk FullCalendar.js
      */
     public function events(Request $request)

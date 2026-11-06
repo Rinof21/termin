@@ -128,10 +128,10 @@
             <p class="text-sm text-slate-500 mt-0.5">Menampilkan jadwal kuliah untuk modul <strong>Semester {{ $activeSemester ?? 'Ganjil' }}</strong>. Klik kegiatan di kalender untuk rincian lengkap.</p>
         </div>
         <div class="flex items-center gap-2.5">
-            <a href="{{ route('admin.termins.index') }}" 
-               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition">
-                <i class="bi bi-calendar-range text-sm text-brand-600"></i>
-                <span>Kelola Termin</span>
+            <a href="{{ route('admin.jadwals.matrix') }}" 
+               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-semibold shadow-xs transition">
+                <i class="bi bi-grid-3x3 text-sm text-emerald-600"></i>
+                <span>Tampilan Matriks</span>
             </a>
             <a href="{{ route('admin.jadwals.table') }}" 
                class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-xs transition">

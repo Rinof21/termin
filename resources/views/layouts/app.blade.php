@@ -107,7 +107,14 @@
                            class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.jadwals.index') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             <i class="bi bi-calendar3 text-lg {{ request()->routeIs('admin.jadwals.index') ? 'text-brand-600' : 'text-slate-400' }}"></i>
                             <span class="flex-1">Kalender Termin</span>
-                            <span class="text-[10px] bg-brand-100 text-brand-700 font-semibold px-2 py-0.5 rounded-full">Baru</span>
+                        </a>
+
+                        <!-- Matriks Jadwal (Tampilan Spreadsheet Modul) -->
+                        <a href="{{ route('admin.jadwals.matrix') }}" 
+                           class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition {{ request()->routeIs('admin.jadwals.matrix') ? 'bg-brand-50 text-brand-700 font-semibold shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                            <i class="bi bi-grid-3x3 text-lg {{ request()->routeIs('admin.jadwals.matrix') ? 'text-brand-600' : 'text-slate-400' }}"></i>
+                            <span class="flex-1">Matriks Jadwal</span>
+                            <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded-full">Baru</span>
                         </a>
 
                         <!-- Tabel Jadwal Kuliah -->
