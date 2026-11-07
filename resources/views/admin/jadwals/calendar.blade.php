@@ -71,6 +71,45 @@
     .fc-timegrid-now-indicator-line {
         border-color: #ef4444;
     }
+    /* Memastikan tabel kalender selalu 100% dan kolom hari Minggu (Min) tidak terpotong */
+    #calendar, .fc {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .fc-view-harness {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .fc-scrollgrid {
+        width: 100% !important;
+        table-layout: fixed !important;
+    }
+    .fc-scrollgrid-sync-table, .fc-col-header {
+        width: 100% !important;
+        table-layout: fixed !important;
+    }
+    .fc-daygrid colgroup col {
+        width: 14.2857% !important;
+    }
+    .fc-daygrid-body {
+        width: 100% !important;
+    }
+    .fc-daygrid-day-top {
+        display: flex !important;
+        flex-direction: row-reverse !important;
+        padding: 3px 6px 0 6px !important;
+    }
+    .fc-daygrid-day-number {
+        padding: 1px 4px !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        color: #475569 !important;
+        white-space: nowrap !important;
+    }
+    .fc-col-header-cell {
+        padding: 0.6rem 0 !important;
+        text-align: center !important;
+    }
     /* Styling Tampilan Bulanan (dayGridMonth) */
     .fc-daygrid-event {
         border-radius: 0.375rem !important;
@@ -169,7 +208,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         <!-- KOLOM 1: Navigasi Minggu & Kalender (7 Kolom pada Desktop) -->
-        <div class="lg:col-span-7 xl:col-span-8 space-y-5 min-w-0">
+        <div class="lg:col-span-7 xl:col-span-8 flex flex-col gap-5 min-w-0">
             <!-- Navigasi Cepat 6 Minggu Termin Berjalan -->
             @if($activeTermin)
                 <div class="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-xs flex items-center gap-2 overflow-x-auto">
@@ -198,10 +237,10 @@
         </div>
 
         <!-- KOLOM 2: Panel Kanan (Filter & Detail Jadwal Kuliah) -->
-        <div id="panel-detail-kolom" class="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-20 space-y-5">
+        <div id="panel-detail-kolom" class="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-20 flex flex-col gap-5">
             
             <!-- Filter Bar Interaktif di Panel Kanan -->
-            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-3.5">
+            <div x-show="!hasSelectedEvent" class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-3.5">
                 <div class="flex items-center justify-between pb-2.5 border-b border-slate-100">
                     <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                         <i class="bi bi-funnel text-brand-600 text-sm"></i>
@@ -454,15 +493,41 @@
 
                 <!-- Daftar Cepat Modul Termin -->
                 <div class="space-y-2.5">
-                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-2">Modul Termin {{ $activeTermin->nomor_termin ?? 4 }}:</span>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">Modul Termin {{ $activeTermin->nomor_termin ?? 4 }}:</span>
+                        <template x-if="filterModul">
+                            <button type="button" 
+                                    @click="filterModul = ''; refetchCalendar()" 
+                                    class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200/60 transition flex items-center gap-0.5"
+                                    title="Tampilkan semua modul">
+                                <i class="bi bi-x"></i>
+                                <span>Semua</span>
+                            </button>
+                        </template>
+                    </div>
                     @foreach($moduls as $m)
-                        <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50/60 flex items-center justify-between text-xs hover:bg-slate-50 cursor-pointer transition"
-                             @click="filterModul = '{{ $m->id }}'; refetchCalendar()">
+                        <div class="p-2.5 rounded-xl border flex items-center justify-between text-xs cursor-pointer transition select-none group"
+                             :class="String(filterModul) === '{{ $m->id }}' 
+                                ? 'ring-2 ring-brand-500 bg-brand-50/70 border-brand-300 shadow-xs' 
+                                : 'border-slate-100 bg-slate-50/60 hover:bg-slate-100/80 hover:border-slate-300'"
+                             @click="filterModul = (String(filterModul) === '{{ $m->id }}' ? '' : '{{ $m->id }}'); refetchCalendar()"
+                             title="Klik untuk filter kalender modul {{ $m->nama }}">
                             <div class="flex items-center gap-2 min-w-0">
-                                <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {{ $m->warna }};"></span>
-                                <span class="font-semibold text-slate-800 truncate">{{ $m->nama }}</span>
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs group-hover:scale-110 transition-transform" style="background-color: {{ $m->warna }};"></span>
+                                <span class="truncate" :class="String(filterModul) === '{{ $m->id }}' ? 'font-bold text-brand-900' : 'font-semibold text-slate-800'">{{ $m->nama }}</span>
                             </div>
-                            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200/60 text-slate-600">{{ $m->kode }}</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <template x-if="String(filterModul) === '{{ $m->id }}'">
+                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-600 text-white flex items-center gap-0.5 shadow-2xs">
+                                        <i class="bi bi-check2"></i>
+                                        <span>Aktif</span>
+                                    </span>
+                                </template>
+                                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded border"
+                                      :class="String(filterModul) === '{{ $m->id }}' ? 'bg-white border-brand-200 text-brand-700 font-bold' : 'bg-slate-200/60 border-transparent text-slate-600'">
+                                    {{ $m->kode }}
+                                </span>
+                            </div>
                         </div>
                     @endforeach
                 </div>
@@ -773,6 +838,22 @@
                 });
 
                 this.calendar.render();
+
+                // Sinkronisasi ukuran kalender agar presisi dan kolom hari Minggu (Min) tidak terpotong
+                setTimeout(() => {
+                    if (this.calendar) {
+                        this.calendar.updateSize();
+                    }
+                }, 50);
+
+                if (window.ResizeObserver && !this.calendarResizeObserver) {
+                    this.calendarResizeObserver = new ResizeObserver(() => {
+                        if (this.calendar) {
+                            this.calendar.updateSize();
+                        }
+                    });
+                    this.calendarResizeObserver.observe(calendarEl);
+                }
             },
 
             refetchCalendar() {

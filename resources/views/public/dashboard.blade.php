@@ -95,12 +95,48 @@
         .fc-theme-standard td, .fc-theme-standard th {
             border-color: #e2e8f0;
         }
+        /* Memastikan tabel kalender selalu 100% dan kolom terbagi rata tanpa terpotong di tepi kanan */
+        #publicCalendar, .fc {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        .fc-view-harness {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        .fc-scrollgrid {
+            width: 100% !important;
+            table-layout: fixed !important;
+        }
+        .fc-scrollgrid-sync-table, .fc-col-header {
+            width: 100% !important;
+            table-layout: fixed !important;
+        }
+        .fc-daygrid colgroup col {
+            width: 14.2857% !important;
+        }
+        .fc-daygrid-body {
+            width: 100% !important;
+        }
+        .fc-daygrid-day-top {
+            display: flex !important;
+            flex-direction: row-reverse !important;
+            padding: 3px 6px 0 6px !important;
+        }
+        .fc-daygrid-day-number {
+            padding: 1px 4px !important;
+            font-size: 0.75rem !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
+            white-space: nowrap !important;
+        }
         .fc-col-header-cell {
             background-color: #f8fafc;
             padding: 0.6rem 0 !important;
             font-weight: 600;
             font-size: 0.8rem;
             color: #475569;
+            text-align: center !important;
         }
         .fc-event {
             border-radius: 0.5rem !important;
@@ -335,7 +371,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             
             <!-- KOLOM KIRI (JADWAL: MATRIKS ATAU KALENDER) -->
-            <div class="lg:col-span-8 xl:col-span-8 2xl:col-span-9 space-y-5 min-w-0">
+            <div class="lg:col-span-8 xl:col-span-8 2xl:col-span-9 flex flex-col gap-5 min-w-0">
                 
                 <!-- SUB-VIEW 1: MATRIKS SPREADSHEET -->
                 <div x-show="activeView === 'matrix'" x-cloak class="space-y-5">
@@ -677,110 +713,88 @@
             <!-- ============================================================== -->
             <!-- KOLOM KANAN: PANEL INFORMASI & RINCIAN DETAIL KEGIATAN          -->
             <!-- ============================================================== -->
-            <div id="panel-informasi-detail" class="lg:col-span-4 xl:col-span-4 2xl:col-span-3 lg:sticky lg:top-20 space-y-5 no-print">
+            <div id="panel-informasi-detail" class="lg:col-span-4 xl:col-span-4 2xl:col-span-3 lg:sticky lg:top-20 flex flex-col gap-5 no-print">
                 
-                <!-- Filter Bar Kalender (Dipindahkan ke Panel Kanan) -->
-                <div x-show="activeView === 'calendar'" class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-3.5">
+                <!-- Filter Bar Kalender (Pencarian Dosen Saja) -->
+                <div x-show="activeView === 'calendar' && !hasSelectedEvent" class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-3">
                     <div class="flex items-center justify-between pb-2.5 border-b border-slate-100">
                         <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                            <i class="bi bi-funnel text-brand-600"></i>
-                            <span>Filter Jadwal</span>
+                            <i class="bi bi-person-search text-brand-600 text-sm"></i>
+                            <span>Pencarian Dosen</span>
                         </span>
                         <button type="button" 
-                                @click="resetCalendarFilters()" 
-                                class="text-[11px] text-brand-600 hover:text-brand-700 font-semibold transition">
-                            Reset
+                                x-show="calendarFilterDosen || dosenSearchQuery"
+                                @click="clearDosenFilter()" 
+                                class="text-[11px] text-brand-600 hover:text-brand-700 font-semibold transition flex items-center gap-0.5">
+                            <i class="bi bi-x"></i>
+                            <span>Reset</span>
                         </button>
                     </div>
 
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pilih Modul</label>
-                            <select x-model="calendarFilterModul" @change="refetchCalendarEvents()"
-                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                                <option value="">Semua Modul</option>
-                                @foreach($moduls as $m)
-                                    <option value="{{ $m->id }}">[{{ $m->kode }}] {{ $m->nama }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pilih Dosen</label>
-                            <div class="relative" @click.away="closeDosenDropdown()">
-                                <div class="relative">
-                                    <input type="text"
-                                           x-model="dosenSearchQuery"
-                                           @focus="isDosenDropdownOpen = true"
-                                           @input="isDosenDropdownOpen = true"
-                                           @keydown.escape="closeDosenDropdown()"
-                                           @keydown.enter.prevent="selectFirstFilteredDosen()"
-                                           placeholder="Ketik nama atau kode dosen..."
-                                           autocomplete="off"
-                                           class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
-                                        <i class="bi bi-search text-[11px]"></i>
-                                    </div>
-                                    <button type="button"
-                                            x-show="calendarFilterDosen || dosenSearchQuery"
-                                            @click.stop="clearDosenFilter()"
-                                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 transition"
-                                            title="Hapus pilihan dosen">
-                                        <i class="bi bi-x-circle-fill text-xs"></i>
-                                    </button>
-                                    <div x-show="!calendarFilterDosen && !dosenSearchQuery" class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">
-                                        <i class="bi bi-chevron-expand text-xs"></i>
-                                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Ketik Nama atau Kode Dosen:</label>
+                        <div class="relative" @click.away="closeDosenDropdown()">
+                            <div class="relative">
+                                <input type="text"
+                                       x-model="dosenSearchQuery"
+                                       @focus="isDosenDropdownOpen = true"
+                                       @input="isDosenDropdownOpen = true"
+                                       @keydown.escape="closeDosenDropdown()"
+                                       @keydown.enter.prevent="selectFirstFilteredDosen()"
+                                       placeholder="Cari dosen pengampu..."
+                                       autocomplete="off"
+                                       class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition shadow-2xs">
+                                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="bi bi-search text-xs"></i>
                                 </div>
-
-                                <!-- Dropdown List -->
-                                <div x-show="isDosenDropdownOpen"
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="opacity-0 scale-95"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-75"
-                                     x-transition:leave-start="opacity-100 scale-100"
-                                     x-transition:leave-end="opacity-0 scale-95"
-                                     class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto py-1 divide-y divide-slate-50"
-                                     style="display: none;">
-                                    
-                                    <button type="button"
-                                            @click="selectDosenFilter('', '')"
-                                            class="w-full text-left px-3 py-2 text-xs hover:bg-brand-50 hover:text-brand-700 flex items-center justify-between transition"
-                                            :class="!calendarFilterDosen ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-700 font-medium'">
-                                        <span>Semua Dosen</span>
-                                        <span x-show="!calendarFilterDosen" class="text-brand-600"><i class="bi bi-check2"></i></span>
-                                    </button>
-
-                                    <template x-for="d in filteredDosenList" :key="d.id">
-                                        <button type="button"
-                                                @click="selectDosenFilter(d.id, d.label)"
-                                                class="w-full text-left px-3 py-2 text-xs hover:bg-brand-50 hover:text-brand-700 flex items-center justify-between gap-2 transition"
-                                                :class="calendarFilterDosen == d.id ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-700 font-medium'">
-                                            <div class="truncate">
-                                                <span class="font-mono text-[11px] text-slate-500 font-normal mr-1" x-text="'[' + d.kode + ']'"></span>
-                                                <span x-text="d.nama"></span>
-                                            </div>
-                                            <span x-show="calendarFilterDosen == d.id" class="text-brand-600 shrink-0"><i class="bi bi-check2"></i></span>
-                                        </button>
-                                    </template>
-
-                                    <div x-show="filteredDosenList.length === 0" class="px-3 py-3 text-center text-xs text-slate-400">
-                                        Dosen tidak ditemukan
-                                    </div>
+                                <button type="button"
+                                        x-show="calendarFilterDosen || dosenSearchQuery"
+                                        @click.stop="clearDosenFilter()"
+                                        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 transition"
+                                        title="Hapus pilihan dosen">
+                                    <i class="bi bi-x-circle-fill text-xs"></i>
+                                </button>
+                                <div x-show="!calendarFilterDosen && !dosenSearchQuery" class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="bi bi-chevron-expand text-xs"></i>
                                 </div>
                             </div>
-                        </div>
 
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pilih Kelompok</label>
-                            <select x-model="calendarFilterKelompok" @change="refetchCalendarEvents()"
-                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-                                <option value="">Semua Kelompok</option>
-                                @foreach($kelompoks as $k)
-                                    <option value="{{ $k }}">{{ $k }}</option>
-                                @endforeach
-                            </select>
+                            <!-- Dropdown List -->
+                            <div x-show="isDosenDropdownOpen"
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto py-1 divide-y divide-slate-50"
+                                 style="display: none;">
+                                
+                                <button type="button"
+                                        @click="selectDosenFilter('', '')"
+                                        class="w-full text-left px-3 py-2 text-xs hover:bg-brand-50 hover:text-brand-700 flex items-center justify-between transition"
+                                        :class="!calendarFilterDosen ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-700 font-medium'">
+                                    <span>Semua Dosen</span>
+                                    <span x-show="!calendarFilterDosen" class="text-brand-600"><i class="bi bi-check2"></i></span>
+                                </button>
+
+                                <template x-for="d in filteredDosenList" :key="d.id">
+                                    <button type="button"
+                                            @click="selectDosenFilter(d.id, d.label)"
+                                            class="w-full text-left px-3 py-2 text-xs hover:bg-brand-50 hover:text-brand-700 flex items-center justify-between gap-2 transition"
+                                            :class="calendarFilterDosen == d.id ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-700 font-medium'">
+                                        <div class="truncate">
+                                            <span class="font-mono text-[11px] text-slate-500 font-normal mr-1" x-text="'[' + d.kode + ']'"></span>
+                                            <span x-text="d.nama"></span>
+                                        </div>
+                                        <span x-show="calendarFilterDosen == d.id" class="text-brand-600 shrink-0"><i class="bi bi-check2"></i></span>
+                                    </button>
+                                </template>
+
+                                <div x-show="filteredDosenList.length === 0" class="px-3 py-3 text-center text-xs text-slate-400">
+                                    Dosen tidak ditemukan
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -889,23 +903,48 @@
                 <!-- KEADAAN 2: BELUM ADA JADWAL DIKLIK (INFORMASI AKADEMIK & LEGENDA) -->
                 <div x-show="!hasSelectedEvent" class="space-y-5">
                     
-                    <!-- Legenda & Daftar Modul Pembelajaran -->
+                    <!-- Legenda & Daftar Modul Pembelajaran (Filter Cepat Kalender) -->
                     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 space-y-3">
                         <div class="flex items-center justify-between">
                             <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Modul Semester {{ $semesterFilter }}:</h4>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{{ count($moduls) }} Modul</span>
+                            <div class="flex items-center gap-1.5">
+                                <template x-if="calendarFilterModul">
+                                    <button type="button" 
+                                            @click="calendarFilterModul = ''; refetchCalendarEvents()" 
+                                            class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200/60 transition flex items-center gap-0.5"
+                                            title="Tampilkan semua modul">
+                                        <i class="bi bi-x"></i>
+                                        <span>Semua</span>
+                                    </button>
+                                </template>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{{ count($moduls) }} Modul</span>
+                            </div>
                         </div>
                         
                         <div class="space-y-2">
                             @foreach($moduls as $m)
-                                <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-slate-100 flex items-center justify-between text-xs transition">
+                                <div class="p-2.5 rounded-xl border flex items-center justify-between text-xs transition cursor-pointer select-none group"
+                                     :class="String(calendarFilterModul) === '{{ $m->id }}' 
+                                        ? 'ring-2 ring-brand-500 bg-brand-50/70 border-brand-300 shadow-xs' 
+                                        : 'border-slate-100 bg-slate-50/70 hover:bg-slate-100/90 hover:border-slate-300'"
+                                     @click="filterCalendarByModul('{{ $m->id }}')"
+                                     title="Klik untuk filter kalender modul {{ $m->nama }}">
                                     <div class="flex items-center gap-2.5 min-w-0">
-                                        <span class="w-3 h-3 rounded-full shrink-0 shadow-2xs" style="background-color: {{ $m->warna }};"></span>
-                                        <span class="font-semibold text-slate-800 truncate">{{ $m->nama }}</span>
+                                        <span class="w-3 h-3 rounded-full shrink-0 shadow-2xs transition-transform group-hover:scale-110" style="background-color: {{ $m->warna }};"></span>
+                                        <span class="truncate" :class="String(calendarFilterModul) === '{{ $m->id }}' ? 'text-brand-900 font-bold' : 'text-slate-800 font-semibold'">{{ $m->nama }}</span>
                                     </div>
-                                    <span class="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 shrink-0">
-                                        {{ $m->kode }}
-                                    </span>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <template x-if="String(calendarFilterModul) === '{{ $m->id }}'">
+                                            <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-brand-600 text-white flex items-center gap-0.5 shadow-2xs">
+                                                <i class="bi bi-check2"></i>
+                                                <span>Aktif</span>
+                                            </span>
+                                        </template>
+                                        <span class="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded border"
+                                              :class="String(calendarFilterModul) === '{{ $m->id }}' ? 'bg-white border-brand-200 text-brand-700' : 'bg-white border-slate-200 text-slate-600'">
+                                            {{ $m->kode }}
+                                        </span>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -1094,6 +1133,18 @@
                     }
                 },
 
+                filterCalendarByModul(modulId) {
+                    if (String(this.calendarFilterModul) === String(modulId)) {
+                        this.calendarFilterModul = '';
+                    } else {
+                        this.calendarFilterModul = String(modulId);
+                    }
+                    if (this.activeView !== 'calendar') {
+                        this.setView('calendar');
+                    }
+                    this.refetchCalendarEvents();
+                },
+
                 resetCalendarFilters() {
                     this.calendarFilterModul = '';
                     this.calendarFilterDosen = '';
@@ -1123,6 +1174,22 @@
                                 this.initCalendar();
                             } else {
                                 this.calendarInstance.render();
+
+                    // Sinkronisasi ukuran kalender agar presisi dan kolom hari Minggu (Min) tidak terpotong
+                    setTimeout(() => {
+                        if (this.calendarInstance) {
+                            this.calendarInstance.updateSize();
+                        }
+                    }, 50);
+
+                    if (window.ResizeObserver && !this.calendarResizeObserver) {
+                        this.calendarResizeObserver = new ResizeObserver(() => {
+                            if (this.calendarInstance) {
+                                this.calendarInstance.updateSize();
+                            }
+                        });
+                        this.calendarResizeObserver.observe(calendarEl);
+                    }
                             }
                         });
                     }
@@ -1409,6 +1476,22 @@
                     });
 
                     this.calendarInstance.render();
+
+                    // Sinkronisasi ukuran kalender agar presisi dan kolom hari Minggu (Min) tidak terpotong
+                    setTimeout(() => {
+                        if (this.calendarInstance) {
+                            this.calendarInstance.updateSize();
+                        }
+                    }, 50);
+
+                    if (window.ResizeObserver && !this.calendarResizeObserver) {
+                        this.calendarResizeObserver = new ResizeObserver(() => {
+                            if (this.calendarInstance) {
+                                this.calendarInstance.updateSize();
+                            }
+                        });
+                        this.calendarResizeObserver.observe(calendarEl);
+                    }
                 },
 
                 refetchCalendarEvents() {
